@@ -2,14 +2,15 @@
 #include <list>
 #include <vector>
 #include <algorithm>
+#include <sstream>
 using namespace std;
 
 #define MAX_SCANLINES 600
+
 /*
     Defines the maximum number of scanlines (y-coordinates) the program can handle for polygon filling.
     This assumes the window height is at most 600 pixels
 */
-
 // -------------------------------------------- Utility Functions --------------------------------------------------
 int Round(double value) {
     return static_cast<int>(value + 0.5);
@@ -47,6 +48,7 @@ void DrawLineDDA(HDC hdc, int startX, int startY, int endX, int endY, COLORREF c
 }
 
 // -------------------------------------------------- Structures -------------------------------------------------
+
 //for Convex Fill
 struct ScanLineEntry {
     int minXCoord, maxXCoord;
@@ -213,6 +215,18 @@ void GeneralPolygonFill(HDC hdc, POINT* polygonVertices, int vertexCount, COLORR
 
 
 /// =====================================================================================================================================================
+int method = 0; // 0 = Convex , 1 = General 
+void DisplayInstructions(HDC hdc) {
+    stringstream ss;
+    ss << "Current Circle Algorithm: ";
+    switch (method) {
+    case 0: ss << "(Convex)"; break;
+    case 1: ss << "(General)"; break;
+    }
+    ss << " Draw Polugon, Press keys to switch algorithms (1) Convex,  (2) General ";
+
+    TextOutA(hdc, 10, 10, ss.str().c_str(), (int)ss.str().length());
+}
 
 // -------------------------------------------- Window Procedure --------------------------------------------------
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -245,19 +259,46 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             POINT last = vertices[vertices.size() - 1];
             DrawLineDDA(hdc, last.x, last.y, first.x, first.y, RGB(0, 0, 0));
 
-            // Fill the polygon 
-            GeneralPolygonFill(hdc, vertices.data(), vertices.size(), RGB(128, 0, 128));
-           // ConvexFill(hdc, vertices.data(), vertices.size(),RGB(128, 0, 128));
+            if (method == 0) {
+                ConvexFill(hdc, vertices.data(), vertices.size(), RGB(128, 0, 128));
+            }
+            else {
+                GeneralPolygonFill(hdc, vertices.data(), vertices.size(), RGB(255, 0, 128));
+            }
             ReleaseDC(hwnd, hdc);
             vertices.clear(); // Clear vertices after filling
         }
         break;
+
+    case WM_KEYDOWN:
+        switch (wParam) {
+        case '1':
+            method = 0; // Set to Convex Fill
+            SetWindowText(hwnd, L"Polygon Fill - Convex Mode");
+            break;
+        case '2':
+            method = 1; // Set to General Fill
+            SetWindowText(hwnd, L"Polygon Fill - General Mode");
+            break;
+        }
+        break;
+    case WM_PAINT:
+    {
+        PAINTSTRUCT ps;
+        hdc = BeginPaint(hwnd, &ps);
+        DisplayInstructions(hdc);
+        EndPaint(hwnd, &ps);
+    }
+    break;
+
     case WM_CLOSE:
         DestroyWindow(hwnd);
         break;
+
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
+
     default:
         return DefWindowProc(hwnd, msg, wParam, lParam);
     }
