@@ -4,7 +4,11 @@
 
 #define ID_BACKGROUND_WHITE  1
 #define ID_BACKGROUND_ORIGINAL  2
+#define ID_ELLIPSE_POLAR       3
+#define ID_ELLIPSE_CARTESIAN   4
+#define ID_ELLIPSE_BRESENHAM   5
 HBRUSH hBackgroundBrush = CreateSolidBrush(RGB(192, 192, 192));
+int selectedAlgorithm = ID_ELLIPSE_POLAR;
 
 int Round(double x)
 {
@@ -95,13 +99,16 @@ void Drawellipsebresenham(HDC hdc, int xc, int yc, int a, int b, COLORREF c) {
 void AddMenus(HWND hwnd) {
     HMENU hMenubar = CreateMenu();
     HMENU hBackgroundMenu = CreateMenu();
-    HMENU hColorMenu = CreateMenu();
-    HMENU hFileMenu = CreateMenu();
+    HMENU hEllipseMenu = CreateMenu();
 
     AppendMenuW(hBackgroundMenu, MF_STRING, ID_BACKGROUND_WHITE, L"White");
     AppendMenuW(hBackgroundMenu, MF_STRING, ID_BACKGROUND_ORIGINAL, L"Original");
+    AppendMenuW(hEllipseMenu, MF_STRING, ID_ELLIPSE_POLAR, L"Polar");
+    AppendMenuW(hEllipseMenu, MF_STRING, ID_ELLIPSE_CARTESIAN, L"Cartesian");
+    AppendMenuW(hEllipseMenu, MF_STRING, ID_ELLIPSE_BRESENHAM, L"Bresenham");
 
     AppendMenuW(hMenubar, MF_POPUP, (UINT_PTR)hBackgroundMenu, L"Background");
+    AppendMenuW(hMenubar, MF_POPUP, (UINT_PTR)hEllipseMenu, L"Ellipse Algorithm");
 
     SetMenu(hwnd, hMenubar);
 }
@@ -112,41 +119,6 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
     static int xc, yc, x, y, count=0, xc1, yc1, count1 = 0, x1,y1;
     switch (m)
     {
-    case WM_LBUTTONDOWN:
-        hdc = GetDC(hwnd);
-        count++;
-        if (count == 1) {
-            xc = LOWORD(lp);
-            yc = HIWORD(lp);
-            SetPixel(hdc, xc, yc, RGB(255, 0, 0)); // Mark center
-        }
-        else if (count == 2) {
-            x = LOWORD(lp);
-            y = HIWORD(lp);
-            int a = abs(x - xc), b = abs(y-yc);
-            Drawellipsepolar(hdc, xc, yc, a, b, RGB(0, 0, 255));
-            // Drawellipsebresenham(hdc, xc, yc, a, b, RGB(0, 0, 255));
-            count = 0;
-        }
-        ReleaseDC(hwnd, hdc);
-        break;
-    case WM_RBUTTONDOWN:
-        hdc = GetDC(hwnd);
-        count1++;
-        if (count1 == 1) {
-            xc1 = LOWORD(lp);
-            yc1 = HIWORD(lp);
-            SetPixel(hdc, xc1, yc1, RGB(255, 0, 0)); // Mark center
-        }
-        else if (count1 == 2) {
-            x1 = LOWORD(lp);
-            y1 = HIWORD(lp);
-            int a = abs(x1 - xc1), b = abs(y1 - yc1);
-            Drawellipsecartesian(hdc, xc1, yc1, a, b, RGB(0, 0, 255));
-            count1 = 0;
-        }
-        ReleaseDC(hwnd, hdc);
-        break;
     case WM_ERASEBKGND:
     {
         HDC hdc = (HDC)wp;
@@ -156,26 +128,59 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         return 1; // background erased
         break;
     }
-    // for background 
+    // for background & choosing ellipse algorithm
     case WM_COMMAND:
         switch (LOWORD(wp)) {
         case ID_BACKGROUND_WHITE:
             DeleteObject(hBackgroundBrush);
             hBackgroundBrush = CreateSolidBrush(RGB(255, 255, 255));
-            // to not treat with this click as a center
-            count = 0;    
-            count1 = 0;
+            count = 0;
             InvalidateRect(hwnd, NULL, TRUE);
             break;
+
         case ID_BACKGROUND_ORIGINAL:
             DeleteObject(hBackgroundBrush);
             hBackgroundBrush = CreateSolidBrush(RGB(192, 192, 192));
-            // to not treat with this click as a center
             count = 0;
-            count1 = 0;
             InvalidateRect(hwnd, NULL, TRUE);
             break;
+
+        case ID_ELLIPSE_POLAR:
+        case ID_ELLIPSE_CARTESIAN:
+        case ID_ELLIPSE_BRESENHAM:
+            selectedAlgorithm = LOWORD(wp);
+            count = 0; // Reset click counter when changing algorithm
+            break;
         }
+        break;
+    case WM_LBUTTONDOWN:
+        hdc = GetDC(hwnd);
+        count++;
+        if (count == 1) {
+            xc = LOWORD(lp);
+            yc = HIWORD(lp);
+            SetPixel(hdc, xc, yc, RGB(255, 0, 0));
+        }
+        else if (count == 2) {
+            x = LOWORD(lp);
+            y = HIWORD(lp);
+            int a = abs(x - xc), b = abs(y - yc);
+
+            switch (selectedAlgorithm) {
+            case ID_ELLIPSE_POLAR:
+                Drawellipsepolar(hdc, xc, yc, a, b, RGB(0, 0, 255));
+                break;
+            case ID_ELLIPSE_CARTESIAN:
+                Drawellipsecartesian(hdc, xc, yc, a, b, RGB(0, 0, 255));
+                break;
+            case ID_ELLIPSE_BRESENHAM:
+                Drawellipsebresenham(hdc, xc, yc, a, b, RGB(0, 0, 255));
+                break;
+            }
+            count = 0;
+        }
+        ReleaseDC(hwnd, hdc);
+        break;
         break;
     case WM_CLOSE:
         DestroyWindow(hwnd); break;
@@ -201,7 +206,7 @@ int APIENTRY WinMain(HINSTANCE hi, HINSTANCE pi, LPSTR cmd, int nsh)
     wc.hInstance = hi;
     wc.hbrBackground = hBackgroundBrush;
     RegisterClass(&wc);
-    HWND hwnd = CreateWindow(L"MyClass", L"ellipse", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hi, 0);
+    HWND hwnd = CreateWindow(L"MyClass", L"2D drawing", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hi, 0);
     AddMenus(hwnd);
     ShowWindow(hwnd, nsh);
     UpdateWindow(hwnd);
