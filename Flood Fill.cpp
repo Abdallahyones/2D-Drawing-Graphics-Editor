@@ -2,7 +2,7 @@
 #include <queue>
 using namespace std;
 
-// --- Struct for non-recursive flood fill ---
+// ---Struct for non-recursive flood fill --
 struct Point {
     double x, y;
     Point(double x = 0.0, double y = 0.0) : x(x), y(y) {}
