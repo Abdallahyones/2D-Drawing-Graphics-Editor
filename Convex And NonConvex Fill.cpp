@@ -218,7 +218,7 @@ void GeneralPolygonFill(HDC hdc, POINT* polygonVertices, int vertexCount, COLORR
 int method = 0; // 0 = Convex , 1 = General 
 void DisplayInstructions(HDC hdc) {
     stringstream ss;
-    ss << "Current Circle Algorithm: ";
+    ss << "Current Filling Algorithm: ";
     switch (method) {
     case 0: ss << "(Convex)"; break;
     case 1: ss << "(General)"; break;
@@ -275,10 +275,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case '1':
             method = 0; // Set to Convex Fill
             SetWindowText(hwnd, L"Polygon Fill - Convex Mode");
+            InvalidateRect(hwnd, NULL, TRUE); // Force redraw to update text
             break;
         case '2':
             method = 1; // Set to General Fill
             SetWindowText(hwnd, L"Polygon Fill - General Mode");
+            InvalidateRect(hwnd, NULL, TRUE); // Force redraw to update text
             break;
         }
         break;
