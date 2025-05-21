@@ -218,7 +218,7 @@ void GeneralPolygonFill(HDC hdc, POINT* polygonVertices, int vertexCount, COLORR
 int method = 0; // 0 = Convex , 1 = General 
 void DisplayInstructions(HDC hdc) {
     stringstream ss;
-    ss << "Current Circle Algorithm: ";
+    ss << "Current Filling Algorithm: ";
     switch (method) {
     case 0: ss << "(Convex)"; break;
     case 1: ss << "(General)"; break;
