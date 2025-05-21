@@ -275,10 +275,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case '1':
             method = 0; // Set to Convex Fill
             SetWindowText(hwnd, L"Polygon Fill - Convex Mode");
+            InvalidateRect(hwnd, NULL, TRUE); // Force redraw to update text
             break;
         case '2':
             method = 1; // Set to General Fill
             SetWindowText(hwnd, L"Polygon Fill - General Mode");
+            InvalidateRect(hwnd, NULL, TRUE); // Force redraw to update text
             break;
         }
         break;
