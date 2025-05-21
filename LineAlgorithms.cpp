@@ -2,6 +2,7 @@
 #include <cmath>
 #include <string>
 #include <sstream>
+#include "Common.h"
 
 using namespace std;
 
@@ -12,23 +13,9 @@ void swap(int& a, int& b) {
     b = temp;
 }
 
-int Round(double x) {
-    return (int)(x + 0.5);
-}
 
-struct Point {
-    double x, y;
-    Point(double x = 0.0, double y = 0.0) : x(x), y(y) {}
-};
 
-// Draw a filled circle at the point
-void DrawPoint(HDC hdc, int x, int y, COLORREF color) {
-    HBRUSH brush = CreateSolidBrush(color);
-    HBRUSH oldBrush = (HBRUSH)SelectObject(hdc, brush);
-    Ellipse(hdc, x - 5, y - 5, x + 5, y + 5);
-    SelectObject(hdc, oldBrush);
-    DeleteObject(brush);
-}
+
 
 // ---------------------------------------------------------------- Line Drawing Algorithms functions -------------------------------------------------
 
@@ -73,14 +60,14 @@ void DrawLineBresenham(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color) 
     int x = x1, y = y1;
 
     // Adjust for |slope| <= 1 or |slope| > 1
-    if (dx >= dy) 
+    if (dx >= dy)
     { // |slope| <= 1, increment x, decide y
-        int d = 2 * dy - dx; 
+        int d = 2 * dy - dx;
         int d1 = 2 * (dy - dx); // Change when y increments
         int d2 = 2 * dy;        // Change when y doesn't increment
         SetPixel(hdc, x, y, color);
         while (true) {
-            if (x == x2) break; 
+            if (x == x2) break;
             x += xStep;
             if (d < 0) {
                 d += d2; // Only move in x direction
@@ -92,11 +79,11 @@ void DrawLineBresenham(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color) 
             SetPixel(hdc, x, y, color);
         }
     }
-    else 
+    else
     { // |slope| > 1, increment y, decide x
-        int d = 2 * dx - dy; 
-        int d1 = 2 * (dx - dy); 
-        int d2 = 2 * dx;        
+        int d = 2 * dx - dy;
+        int d1 = 2 * (dx - dy);
+        int d2 = 2 * dx;
         SetPixel(hdc, x, y, color);
         while (true) {
             if (y == y2) break; // Stop when y reaches y2
@@ -136,32 +123,11 @@ void DrawLineParametric(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color)
 }
 
 // Global variables
-enum Algorithm { 
-    DDA, 
-    BRESENHAM,
-    PARAMETRIC
-};
-Algorithm currentAlgorithm = DDA;
 Point points[2];
 int pointCount = 0;
 bool drawing = false;
 
-// Display instructions
-void DisplayInstructions(HDC hdc) {
-    stringstream ss;
-    ss << "Current Algorithm: ";
-    switch (currentAlgorithm) {
-    case DDA: ss << "DDA"; break;
-    case BRESENHAM: ss << "Bresenham"; break;
-    case PARAMETRIC: ss << "Parametric"; break;
-    }
-    ss << "\n Click to set first point, then second point";
-
-    TextOutA(hdc, 10, 10, ss.str().c_str(), (int)ss.str().length());
-}
-
-// Window Procedure
-LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT WINAPI drawLine(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam   , Algorithm currentAlgorithm , COLORREF color) {
     HDC hdc;
 
     switch (msg) {
@@ -173,37 +139,32 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
             hdc = GetDC(hwnd);
             if (pointCount == 1) {
-                DrawPoint(hdc, points[0].x, points[0].y, RGB(255, 165, 0));
+                DrawPoint(hdc, points[0].x, points[0].y, color);
             }
             else if (pointCount == 2) {
                 // Draw line between the two points
                 switch (currentAlgorithm) {
-                case DDA:
-                    DrawLineDDA(hdc, points[0].x, points[0].y, points[1].x, points[1].y, RGB(255, 0, 0));
+                case ALGO_LINE_DDA:
+                    DrawLineDDA(hdc, points[0].x, points[0].y, points[1].x, points[1].y,color);
                     break;
-                case BRESENHAM:
-                    DrawLineBresenham(hdc, points[0].x, points[0].y, points[1].x, points[1].y, RGB(0, 255, 0));
+                case ALGO_LINE_BRESENHAM:
+                    DrawLineBresenham(hdc, points[0].x, points[0].y, points[1].x, points[1].y, color);
                     break;
-                case PARAMETRIC:
-                    DrawLineParametric(hdc, points[0].x, points[0].y, points[1].x, points[1].y, RGB(0, 0, 255));
+                case ALGO_LINE_MIDPOINT:
+                    DrawLineParametric(hdc, points[0].x, points[0].y, points[1].x, points[1].y, color);
                     break;
                 }
                 // Draw second point
-                DrawPoint(hdc, points[1].x, points[1].y, RGB(255, 165, 0));
+                DrawPoint(hdc, points[1].x, points[1].y,color);
                 pointCount = 0; // Reset for next line
             }
-            DisplayInstructions(hdc);
+
             ReleaseDC(hwnd, hdc);
         }
         break;
 
     case WM_KEYDOWN:
-        if (wParam == '1') currentAlgorithm = DDA;
-        else if (wParam == '2') currentAlgorithm = BRESENHAM;
-        else if (wParam == '3') currentAlgorithm = PARAMETRIC;
-
         hdc = GetDC(hwnd);
-        DisplayInstructions(hdc);
         ReleaseDC(hwnd, hdc);
         break;
 
@@ -211,7 +172,6 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     {
         PAINTSTRUCT ps;
         hdc = BeginPaint(hwnd, &ps);
-        DisplayInstructions(hdc);
         EndPaint(hwnd, &ps);
     }
     break;
@@ -230,36 +190,4 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-// Main Entry Point
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    // Register window class
-    WNDCLASS wc = { 0 };
-    wc.lpfnWndProc = WndProc;
-    wc.hInstance = hInstance;
-    wc.lpszClassName = L"LineDrawingDemo";
-    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 
-    if (!RegisterClass(&wc)) return 0;
-
-    // Create window
-    HWND hwnd = CreateWindow(
-        L"LineDrawingDemo", L"Line Drawing Algorithms Demo (1=DDA, 2=Bresenham, 3=Parametric)",
-        WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
-        NULL, NULL, hInstance, NULL);
-
-    if (!hwnd) return 0;
-
-    ShowWindow(hwnd, nCmdShow);
-    UpdateWindow(hwnd);
-
-    // Message loop
-    MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-
-    return (int)msg.wParam;
-}

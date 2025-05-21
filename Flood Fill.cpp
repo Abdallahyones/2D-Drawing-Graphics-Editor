@@ -1,28 +1,14 @@
 #include <windows.h>
 #include <queue>
+#include "Common.h"
 using namespace std;
 
-// ---Struct for non-recursive flood fill --
-struct Point {
-    double x, y;
-    Point(double x = 0.0, double y = 0.0) : x(x), y(y) {}
-};
 
-// --- Draw 8 symmetric points for circle ---
-void Draw8Points(HDC hdc, int xc, int yc, int x, int y, COLORREF c) {
-    SetPixel(hdc, xc + x, yc + y, c);
-    SetPixel(hdc, xc - x, yc + y, c);
-    SetPixel(hdc, xc - x, yc - y, c);
-    SetPixel(hdc, xc + x, yc - y, c);
-    SetPixel(hdc, xc + y, yc + x, c);
-    SetPixel(hdc, xc - y, yc + x, c);
-    SetPixel(hdc, xc - y, yc - x, c);
-    SetPixel(hdc, xc + y, yc - x, c);
-}
+
 
 
 // --- Bresenham Circle Drawing ---
-void CircleBresenham(HDC hdc, int xc, int yc, int radius, COLORREF c) {
+void CircleBresenhamM(HDC hdc, int xc, int yc, int radius, COLORREF c) {
     int x = 0, y = radius, d = 1 - radius;
     Draw8Points(hdc, xc, yc, x, y, c);
     while (x < y) {
@@ -75,10 +61,10 @@ void FloodFillNonRecursive(HDC hdc, int x, int y, COLORREF boundaryColor, COLORR
 
 
 // --- Global state for toggle ---
-int method = 0; // 0 = Recursive, 1 = Non-recursive
+
 
 // --- Window Procedure ---
-LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
+LRESULT WINAPI drawRecursive(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ,Algorithm algo, COLORREF color) {
     switch (msg) {
     case WM_LBUTTONDOWN: {
         HDC hdc = GetDC(hwnd);
@@ -88,23 +74,22 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         COLORREF boundaryColor = RGB(0, 0, 0); // black boundary
 
         // Draw the circle centered at (x, y) with radius 150
-        CircleBresenham(hdc, x, y, 150, RGB(0, 0, 0));
+        CircleBresenhamM(hdc, x, y, 150, RGB(0, 0, 0));
 
         // Call the selected flood fill method
-        if (method == 0) {
-            FloodFillOneOctantRecursive(hdc, x, y, 0, 0, boundaryColor, RGB(255, 0, 0));
+        if (algo == ALGO_Recursive) {
+            FloodFillOneOctantRecursive(hdc, x, y, 0, 0, boundaryColor, color);
         }
         else {
-            FloodFillNonRecursive(hdc, x, y, boundaryColor, RGB(0, 0, 255));
+            FloodFillNonRecursive(hdc, x, y, boundaryColor, color);
         }
 
         ReleaseDC(hwnd, hdc);
         break;
     }
     case WM_RBUTTONDOWN: {
-        method = !method;
-        MessageBox(hwnd, method ? L"Non-Recursive Mode" : L"Recursive Mode", L"Mode Switched", MB_OK);
-        break;
+
+              break;
     }
     case WM_CLOSE:
         DestroyWindow(hwnd);
@@ -118,32 +103,3 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     return 0;
 }
 
-// --- WinMain Entry Point ---
-int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
-    WNDCLASS wc = {};
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-    wc.hInstance = hInstance;
-    wc.lpfnWndProc = WndProc;
-    wc.lpszClassName = L"MyClass";
-    wc.lpszMenuName = NULL;
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-
-    RegisterClass(&wc);
-
-    HWND hwnd = CreateWindow(L"MyClass", L"Flood Fill (Left: Fill, Right: Toggle Mode)",
-        WS_OVERLAPPEDWINDOW, 100, 100, 800, 600, NULL, NULL, hInstance, NULL);
-    ShowWindow(hwnd, nCmdShow);
-    UpdateWindow(hwnd);
-
-    MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-
-    return 0;
-}

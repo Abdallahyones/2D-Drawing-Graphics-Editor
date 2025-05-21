@@ -8,6 +8,7 @@
 #include <windows.h>
 #include <math.h>
 #include <queue>
+#include "Common.h"
 
 using namespace std ;
 
@@ -158,7 +159,7 @@ void DrawHermiteCurve(HDC hdc, Vector2& P0, Vector2& T0, Vector2& P1, Vector2& T
     }
 }
 
-// Bézier curve as a special Hermite curve
+// BÃ©zier curve as a special Hermite curve
 void DrawBezierCurve(HDC hdc, Vector2& P0, Vector2& P1, Vector2& P2, Vector2& P3, int numpoints, COLORREF color = RGB(0, 0, 0)) {
     Vector2 T0(3 * (P1.x - P0.x), 3 * (P1.y - P0.y));
     Vector2 T1(3 * (P3.x - P2.x), 3 * (P3.y - P2.y));
@@ -411,7 +412,7 @@ void FillRectangleWithBezier(HDC hdc, Vector2 topLeft, int width, int height, CO
         double t = (double)i / numCurves;
         double y = topLeft.y + t * height;
 
-        // Control points for horizontal Bézier curve
+        // Control points for horizontal BÃ©zier curve
         Vector2 P0(topLeft.x, y);
         Vector2 P1(topLeft.x + width * 0.33, y + sin(i) * 5); // Optional wave effect
         Vector2 P2(topLeft.x + width * 0.66, y - sin(i) * 5);
@@ -512,7 +513,7 @@ void DrawSquare(HDC hdc, int x1, int y1, int x2, int y2){
 
 
 
-LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam , Algorithm algo )
 {
     HDC hdc;
     static int clickCount = 0;

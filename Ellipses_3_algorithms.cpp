@@ -1,7 +1,7 @@
 #include <iostream>
 #include <Windows.h>
 #include <cmath>
-
+#include "Common.h"
 #define ID_BACKGROUND_WHITE  1
 #define ID_BACKGROUND_ORIGINAL  2
 #define ID_ELLIPSE_POLAR       3
@@ -10,10 +10,7 @@
 HBRUSH hBackgroundBrush = CreateSolidBrush(RGB(192, 192, 192));
 int selectedAlgorithm = ID_ELLIPSE_POLAR;
 
-int Round(double x)
-{
-    return (int)(x + 0.5);
-}
+
 
 /**---------------------Draw 4 points for similarity------------------------------**/
 // for drawing point and 3 siblings for ellipse (similarity) 
@@ -31,7 +28,7 @@ void Draw4Points(HDC hdc, int xc, int yc, int x, int y, COLORREF c) {
 void Drawellipsepolar(HDC hdc, int xc, int yc, int a, int b, COLORREF c) {
     const double PI = 3.141592653589793 / 2; // loop on only 1 quad on ellipse & by similarity we will draw whole ellipse
     int x = a, y = 0;
-    double theta = 0, step = 1.0/ max(a,b);
+    double theta = 0, step = 1.0/ fmax(a,b);
     Draw4Points(hdc, xc, yc, x, y, c);
     // till theta reach first quad angle 
     while (theta <= PI) {
@@ -95,25 +92,9 @@ void Drawellipsebresenham(HDC hdc, int xc, int yc, int a, int b, COLORREF c) {
     }
 }
 
-/**--------------------------------Menu----------------------------------------**/
-void AddMenus(HWND hwnd) {
-    HMENU hMenubar = CreateMenu();
-    HMENU hBackgroundMenu = CreateMenu();
-    HMENU hEllipseMenu = CreateMenu();
 
-    AppendMenuW(hBackgroundMenu, MF_STRING, ID_BACKGROUND_WHITE, L"White");
-    AppendMenuW(hBackgroundMenu, MF_STRING, ID_BACKGROUND_ORIGINAL, L"Original");
-    AppendMenuW(hEllipseMenu, MF_STRING, ID_ELLIPSE_POLAR, L"Polar");
-    AppendMenuW(hEllipseMenu, MF_STRING, ID_ELLIPSE_CARTESIAN, L"Cartesian");
-    AppendMenuW(hEllipseMenu, MF_STRING, ID_ELLIPSE_BRESENHAM, L"Bresenham");
 
-    AppendMenuW(hMenubar, MF_POPUP, (UINT_PTR)hBackgroundMenu, L"Background");
-    AppendMenuW(hMenubar, MF_POPUP, (UINT_PTR)hEllipseMenu, L"Ellipse Algorithm");
-
-    SetMenu(hwnd, hMenubar);
-}
-
-LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
+LRESULT drawEllipses(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , Algorithm algo ,COLORREF color)
 {
     HDC hdc;
     static int xc, yc, x, y, count=0, xc1, yc1, count1 = 0, x1,y1;
@@ -133,14 +114,14 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         switch (LOWORD(wp)) {
         case ID_BACKGROUND_WHITE:
             DeleteObject(hBackgroundBrush);
-            hBackgroundBrush = CreateSolidBrush(RGB(255, 255, 255));
+            hBackgroundBrush = CreateSolidBrush(color);
             count = 0;
             InvalidateRect(hwnd, NULL, TRUE);
             break;
 
         case ID_BACKGROUND_ORIGINAL:
             DeleteObject(hBackgroundBrush);
-            hBackgroundBrush = CreateSolidBrush(RGB(192, 192, 192));
+            hBackgroundBrush = CreateSolidBrush(color);
             count = 0;
             InvalidateRect(hwnd, NULL, TRUE);
             break;
@@ -159,22 +140,22 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         if (count == 1) {
             xc = LOWORD(lp);
             yc = HIWORD(lp);
-            SetPixel(hdc, xc, yc, RGB(255, 0, 0));
+            SetPixel(hdc, xc, yc, color);
         }
         else if (count == 2) {
             x = LOWORD(lp);
             y = HIWORD(lp);
             int a = abs(x - xc), b = abs(y - yc);
 
-            switch (selectedAlgorithm) {
-            case ID_ELLIPSE_POLAR:
-                Drawellipsepolar(hdc, xc, yc, a, b, RGB(0, 0, 255));
+            switch (algo) {
+            case ALGO_ELLIPSE_POLAR :
+                Drawellipsepolar(hdc, xc, yc, a, b,color);
                 break;
-            case ID_ELLIPSE_CARTESIAN:
-                Drawellipsecartesian(hdc, xc, yc, a, b, RGB(0, 0, 255));
+            case ALGO_ELLIPSE_DIRECT:
+                Drawellipsecartesian(hdc, xc, yc, a, b, color);
                 break;
-            case ID_ELLIPSE_BRESENHAM:
-                Drawellipsebresenham(hdc, xc, yc, a, b, RGB(0, 0, 255));
+            case ALGO_ELLIPSE_MIDPOINT:
+                Drawellipsebresenham(hdc, xc, yc, a, b, color);
                 break;
             }
             count = 0;
@@ -191,30 +172,3 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
     return 0;
 }
 
-int APIENTRY WinMain(HINSTANCE hi, HINSTANCE pi, LPSTR cmd, int nsh)
-{
-    WNDCLASS wc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
-    wc.lpszClassName = L"MyClass";
-    wc.lpszMenuName = NULL;
-    wc.lpfnWndProc = WndProc;
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.hInstance = hi;
-    wc.hbrBackground = hBackgroundBrush;
-    RegisterClass(&wc);
-    HWND hwnd = CreateWindow(L"MyClass", L"2D drawing", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hi, 0);
-    AddMenus(hwnd);
-    ShowWindow(hwnd, nsh);
-    UpdateWindow(hwnd);
-    MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0) > 0)
-    {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-    return 0;
-}

@@ -1,0 +1,18 @@
+{
+  "configurations": [
+    {
+      "name": "windows-gcc-x86",
+      "includePath": [
+        "${workspaceFolder}/**"
+      ],
+      "compilerPath": "C:/Users/om983/Downloads/compilors/MinGW/bin/gcc.exe",
+      "cStandard": "${default}",
+      "cppStandard": "c++20",
+      "intelliSenseMode": "windows-gcc-x86",
+      "compilerArgs": [
+        ""
+      ]
+    }
+  ],
+  "version": 4
+}

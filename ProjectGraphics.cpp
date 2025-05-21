@@ -601,7 +601,7 @@ void drawPolygon(HDC hdc,  vector<Point>& poly, COLORREF c) {
 
 
 
-LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
+LRESULT drawClipping(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 {
 	HDC hdc;
 	PAINTSTRUCT ps;
@@ -668,28 +668,3 @@ LRESULT WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 	return 0;
 }
 
-int APIENTRY WinMain(HINSTANCE hi, HINSTANCE pi, LPSTR cmd, int nsh)
-{
-	WNDCLASS wc;
-	wc.cbClsExtra = 0;
-	wc.cbWndExtra = 0;
-	wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
-	wc.lpszClassName = L"MyClass";
-	wc.lpszMenuName = NULL;
-	wc.lpfnWndProc = WndProc;
-	wc.style = CS_HREDRAW | CS_VREDRAW;
-	wc.hInstance = hi;
-	RegisterClass(&wc);
-	HWND hwnd = CreateWindow(L"MyClass", L"Task", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hi, 0);
-	ShowWindow(hwnd, nsh);
-	UpdateWindow(hwnd);
-	MSG msg;
-	while (GetMessage(&msg, NULL, 0, 0) > 0)
-	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
-	return 0;
-}

@@ -1,37 +1,9 @@
 #include <Windows.h>
 #include<sstream>
 #include <cmath>
+#include "Common.h"
 using namespace std;
 
-int Round(double x) {
-    return (int)(x + 0.5);
-}
-
-struct Point {
-    double x, y;
-    Point(double x = 0.0, double y = 0.0) : x(x), y(y) {}
-};
-
-// Draw a filled circle at the point
-void DrawPoint(HDC hdc, int x, int y, COLORREF color) {
-    HBRUSH brush = CreateSolidBrush(color);
-    HBRUSH oldBrush = (HBRUSH)SelectObject(hdc, brush);
-    Ellipse(hdc, x - 5, y - 5, x + 5, y + 5);
-    SelectObject(hdc, oldBrush);
-    DeleteObject(brush);
-}
-
-void Draw8Points(HDC hdc, int xc, int yc, int a, int b, COLORREF color)
-{
-    SetPixel(hdc, xc + a, yc + b, color);
-    SetPixel(hdc, xc - a, yc + b, color);
-    SetPixel(hdc, xc - a, yc - b, color);
-    SetPixel(hdc, xc + a, yc - b, color);
-    SetPixel(hdc, xc + b, yc + a, color);
-    SetPixel(hdc, xc - b, yc + a, color);
-    SetPixel(hdc, xc - b, yc - a, color);
-    SetPixel(hdc, xc + b, yc - a, color);
-}
 
 // ------------------------------------------------------------------------ Circle Algorithms ----------------------------------------------------------
 
@@ -138,34 +110,15 @@ void CircleModifiedBresenham(HDC hdc, int xc, int yc, int R, COLORREF color)
     }
 }
 
-enum CircleAlgorithm {
-    DIRECT,
-    POLAR,
-    ITERATIVE_POLAR,
-    BRESENHAM,
-    MODIFIED_BRESENHAM
-};
 
-CircleAlgorithm currentCircleAlgorithm = DIRECT;
-Point circlePoints[2]; // [0]: center, [1]: point on circumference
+
+
+Point circlePoints[2];
 int circlePointCount = 0;
 
-void DisplayCircleInstructions(HDC hdc) {
-    stringstream ss;
-    ss << "Current Circle Algorithm: ";
-    switch (currentCircleAlgorithm) {
-    case DIRECT: ss << "(Direct)"; break;
-    case POLAR: ss << "(Polar)"; break;
-    case ITERATIVE_POLAR: ss << "(Iterative Polar)"; break;
-    case BRESENHAM: ss << "(Bresenham)"; break;
-    case MODIFIED_BRESENHAM: ss << "(Modified Bresenham)"; break;
-    }
-    ss << " Click center, then radius point,Press keys to switch algorithms.(1) DIRECT,  (2)POLAR , (3)ITERATIVE_POLAR, (4) BRESENHAM ,(5) MODIFIED_BRESENHAM";
 
-    TextOutA(hdc, 10, 10, ss.str().c_str(), (int)ss.str().length());
-}
 
-LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT WINAPI drawCircle(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam , Algorithm currentCircleAlgorithm , COLORREF color) {
     HDC hdc;
 
     switch (msg) {
@@ -176,7 +129,7 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             circlePointCount++;
 
             hdc = GetDC(hwnd);
-            DrawPoint(hdc, circlePoints[circlePointCount - 1].x, circlePoints[circlePointCount - 1].y, RGB(255, 165, 0));
+            DrawPoint(hdc, circlePoints[circlePointCount - 1].x, circlePoints[circlePointCount - 1].y, color);
 
             if (circlePointCount == 2) {
                 int dx = circlePoints[1].x - circlePoints[0].x;
@@ -184,35 +137,28 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 int R = (int)sqrt(dx * dx + dy * dy);
 
                 switch (currentCircleAlgorithm) {
-                case DIRECT:
-                    CircleDirect(hdc, circlePoints[0].x, circlePoints[0].y, R, RGB(255, 0, 0)); break;
-                case POLAR:
-                    CirclePolar(hdc, circlePoints[0].x, circlePoints[0].y, R, RGB(0, 255, 0)); break;
-                case ITERATIVE_POLAR:
-                    CircleIterativePolar(hdc, circlePoints[0].x, circlePoints[0].y, R, RGB(0, 0, 255)); break;
-                case BRESENHAM:
-                    CircleBresenham(hdc, circlePoints[0].x, circlePoints[0].y, R, RGB(255, 255, 0)); break;
-                case MODIFIED_BRESENHAM:
-                    CircleModifiedBresenham(hdc, circlePoints[0].x, circlePoints[0].y, R, RGB(255, 0, 255)); break;
+                case ALGO_CIRCLE_DIRECT:
+                    CircleDirect(hdc, circlePoints[0].x, circlePoints[0].y, R,color); break;
+                case ALGO_CIRCLE_POLAR:
+                    CirclePolar(hdc, circlePoints[0].x, circlePoints[0].y, R, color); break;
+                case ALGO_CIRCLE_ITERATIVE_POLAR:
+                    CircleIterativePolar(hdc, circlePoints[0].x, circlePoints[0].y, R, color); break;
+                case ALGO_CIRCLE_MIDPOINT:
+                    CircleBresenham(hdc, circlePoints[0].x, circlePoints[0].y, R, color); break;
+                case ALGO_CIRCLE_MODIFIED_MIDPOINT:
+                    CircleModifiedBresenham(hdc, circlePoints[0].x, circlePoints[0].y, R, color); break;
                 }
 
                 circlePointCount = 0; // Reset for next circle
             }
 
-            DisplayCircleInstructions(hdc);
+
             ReleaseDC(hwnd, hdc);
         }
         break;
 
     case WM_KEYDOWN:
-        if (wParam == '1') currentCircleAlgorithm = DIRECT;
-        else if (wParam == '2') currentCircleAlgorithm = POLAR;
-        else if (wParam == '3') currentCircleAlgorithm = ITERATIVE_POLAR;
-        else if (wParam == '4') currentCircleAlgorithm = BRESENHAM;
-        else if (wParam == '5') currentCircleAlgorithm = MODIFIED_BRESENHAM;
-
         hdc = GetDC(hwnd);
-        DisplayCircleInstructions(hdc);
         ReleaseDC(hwnd, hdc);
         break;
 
@@ -220,7 +166,6 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     {
         PAINTSTRUCT ps;
         hdc = BeginPaint(hwnd, &ps);
-        DisplayCircleInstructions(hdc);
         EndPaint(hwnd, &ps);
     }
     break;
@@ -240,31 +185,4 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
-    WNDCLASS wc = {};
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-    wc.hInstance = hInstance;
-    wc.lpfnWndProc = WndProc;
-    wc.lpszClassName = L"MyClass";
-    wc.lpszMenuName = NULL;
-    wc.style = CS_HREDRAW | CS_VREDRAW;
 
-    RegisterClass(&wc);
-
-    HWND hwnd = CreateWindow(L"MyClass", L"Circle Algorithms",
-        WS_OVERLAPPEDWINDOW, 100, 100, 800, 600, NULL, NULL, hInstance, NULL);
-    ShowWindow(hwnd, nCmdShow);
-    UpdateWindow(hwnd);
-
-    MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-
-    return 0;
-}
