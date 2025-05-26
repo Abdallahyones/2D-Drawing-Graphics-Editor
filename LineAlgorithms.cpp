@@ -108,11 +108,6 @@ void DrawLineParametric(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color)
 
     double step = 1.0 / max(abs(dx), abs(dy));
 
-    if (step == 0) {
-        SetPixel(hdc, x1, y1, color);
-        return;
-    }
-
     double x, y;
 
     for (double t = 0; t <= 1; t += step) {
