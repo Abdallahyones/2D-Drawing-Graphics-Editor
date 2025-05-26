@@ -62,19 +62,19 @@ void DrawLineBresenham(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color) 
     // Adjust for |slope| <= 1 or |slope| > 1
     if (dx >= dy)
     { // |slope| <= 1, increment x, decide y
-        int d = 2 * dy - dx;
-        int d1 = 2 * (dy - dx); // Change when y increments
-        int d2 = 2 * dy;        // Change when y doesn't increment
+        int d = dx - 2 * dy;
+        int d1 = 2 * (dx - dy); // Change when y increments
+        int d2 = -2 * dy;        // Change when y doesn't increment
         SetPixel(hdc, x, y, color);
         while (true) {
             if (x == x2) break;
             x += xStep;
             if (d < 0) {
-                d += d2; // Only move in x direction
+                d += d1; 
+                y += yStep; // Move in both x and y directions
             }
             else {
-                y += yStep;
-                d += d1; // Move in both x and y directions
+                d += d2; // Only move in x direction 
             }
             SetPixel(hdc, x, y, color);
         }
