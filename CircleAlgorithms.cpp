@@ -73,7 +73,7 @@ void CircleBresenham(HDC hdc, int xc, int yc, int R, COLORREF color)
     while (x < y)
     {
         if (d < 0)
-            d += 2 * x + 2;
+            d += 2 * x + 3;
         else
         {
             d += 2 * (x - y) + 5;
