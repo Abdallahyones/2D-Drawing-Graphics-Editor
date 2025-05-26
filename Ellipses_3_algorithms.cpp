@@ -94,7 +94,7 @@ void Drawellipsebresenham(HDC hdc, int xc, int yc, int a, int b, COLORREF c) {
 
 
 
-LRESULT drawEllipses(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , Algorithm algo ,COLORREF color)
+LRESULT drawEllipses(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , Algorithm algo ,COLORREF color , DrawCommand& cmd)
 {
     HDC hdc;
     static int xc, yc, x, y, count=0, xc1, yc1, count1 = 0, x1,y1;
@@ -141,12 +141,13 @@ LRESULT drawEllipses(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , Algorithm algo ,C
             xc = LOWORD(lp);
             yc = HIWORD(lp);
             SetPixel(hdc, xc, yc, color);
+            cmd.points.emplace_back(xc , yc);
         }
         else if (count == 2) {
             x = LOWORD(lp);
             y = HIWORD(lp);
             int a = abs(x - xc), b = abs(y - yc);
-
+            cmd.points.emplace_back(x , y);
             switch (algo) {
             case ALGO_ELLIPSE_POLAR :
                 Drawellipsepolar(hdc, xc, yc, a, b,color);

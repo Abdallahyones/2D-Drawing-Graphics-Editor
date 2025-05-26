@@ -118,7 +118,7 @@ int circlePointCount = 0;
 
 
 
-LRESULT WINAPI drawCircle(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam , Algorithm currentCircleAlgorithm , COLORREF color) {
+LRESULT WINAPI drawCircle(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam , Algorithm currentCircleAlgorithm , COLORREF color , DrawCommand& cmd) {
     HDC hdc;
 
     switch (msg) {
@@ -127,11 +127,11 @@ LRESULT WINAPI drawCircle(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam , Al
             circlePoints[circlePointCount].x = LOWORD(lParam);
             circlePoints[circlePointCount].y = HIWORD(lParam);
             circlePointCount++;
-
             hdc = GetDC(hwnd);
             DrawPoint(hdc, circlePoints[circlePointCount - 1].x, circlePoints[circlePointCount - 1].y, color);
-
+            cmd.points.emplace_back(circlePoints[0]);
             if (circlePointCount == 2) {
+            cmd.points.emplace_back(circlePoints[1]);
                 int dx = circlePoints[1].x - circlePoints[0].x;
                 int dy = circlePoints[1].y - circlePoints[0].y;
                 int R = (int)sqrt(dx * dx + dy * dy);

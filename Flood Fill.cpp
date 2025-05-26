@@ -64,24 +64,25 @@ void FloodFillNonRecursive(HDC hdc, int x, int y, COLORREF boundaryColor, COLORR
 
 
 // --- Window Procedure ---
-LRESULT WINAPI drawRecursive(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ,Algorithm algo, COLORREF color) {
+LRESULT WINAPI drawRecursive(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ,Algorithm algo, COLORREF color , DrawCommand& cmd) {
     switch (msg) {
     case WM_LBUTTONDOWN: {
         HDC hdc = GetDC(hwnd);
         int x = LOWORD(lp);
         int y = HIWORD(lp);
-
-        COLORREF boundaryColor = RGB(0, 0, 0); // black boundary
-
+        cmd.points.emplace_back(x,y);
+        cmd.fillColor = RGB(0, 0, 0);
+        cmd.radius= 150;
+        COLORREF boundaryColor =color; // black boundary
         // Draw the circle centered at (x, y) with radius 150
         CircleBresenhamM(hdc, x, y, 150, RGB(0, 0, 0));
 
         // Call the selected flood fill method
         if (algo == ALGO_Recursive) {
-            FloodFillOneOctantRecursive(hdc, x, y, 0, 0, boundaryColor, color);
+            FloodFillOneOctantRecursive(hdc, x, y, 0, 0, boundaryColor, RGB(0,255,0));
         }
         else {
-            FloodFillNonRecursive(hdc, x, y, boundaryColor, color);
+            FloodFillNonRecursive(hdc, x, y, boundaryColor, RGB(0,255,0));
         }
 
         ReleaseDC(hwnd, hdc);

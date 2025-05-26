@@ -127,7 +127,7 @@ Point points[2];
 int pointCount = 0;
 bool drawing = false;
 
-LRESULT WINAPI drawLine(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam   , Algorithm currentAlgorithm , COLORREF color) {
+LRESULT WINAPI drawLine(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam   , Algorithm currentAlgorithm , COLORREF color , DrawCommand &cmd) {
     HDC hdc;
 
     switch (msg) {
@@ -137,18 +137,20 @@ LRESULT WINAPI drawLine(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam   , Al
             points[pointCount].y = HIWORD(lParam);
             pointCount++;
 
+            cmd.points.emplace_back(points[0]);
             hdc = GetDC(hwnd);
             if (pointCount == 1) {
                 DrawPoint(hdc, points[0].x, points[0].y, color);
             }
             else if (pointCount == 2) {
+                cmd.points.emplace_back(points[1]);
                 // Draw line between the two points
                 switch (currentAlgorithm) {
                 case ALGO_LINE_DDA:
-                    DrawLineDDA(hdc, points[0].x, points[0].y, points[1].x, points[1].y,color);
+                    DrawLineDDA(hdc, points[0].x, points[0].y, points[1].x, points[1].y,color );
                     break;
                 case ALGO_LINE_BRESENHAM:
-                    DrawLineBresenham(hdc, points[0].x, points[0].y, points[1].x, points[1].y, color);
+                    DrawLineBresenham(hdc, points[0].x, points[0].y, points[1].x, points[1].y, color );
                     break;
                 case ALGO_LINE_MIDPOINT:
                     DrawLineParametric(hdc, points[0].x, points[0].y, points[1].x, points[1].y, color);

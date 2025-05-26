@@ -2,6 +2,9 @@
 #define ALGONAMES_H
 
 #include <windows.h>
+#include <vector>
+#include <iostream>
+using namespace std;
 
 // Enumerations for shapes
 enum Shape {
@@ -52,19 +55,60 @@ enum Algorithm {
     ALGO_CARDINAL_SPLINE,
 
     // Clipping Algorithms
-    ALGO_CLIP_RECTANGLE_POINT_LINE_POLYGON,
-    ALGO_CLIP_SQUARE_POINT_LINE
+    ALGO_CLIP_RECTANGLE_LINE,
+    ALGO_CLIP_RECTANGLE_POINT,
+    ALGO_CLIP_RECTANGLE_POLYGON,
+    ALGO_CLIP_SQUARE_POINT,
+    ALGO_CLIP_SQUARE_LINE
+};
+enum class FillQuarter {
+    FIRST = 1, SECOND, THIRD, FOURTH, ALL
 };
 
 // Struct for point
 struct Point {
     double x, y;
+
     Point(double x = 0.0, double y = 0.0);
+    friend ostream& operator<<(ostream& os, const Point& p) {
+        return os << p.x << ' ' << p.y;
+    }
+    friend istream& operator>>(istream& is, Point& p) {
+        return is >> p.x >> p.y;
+    }
 };
+
+
+const int xLeft = 300, xRight = 500, yTop = 400, yBottom = 300;
+const int INSIDE = 0; //0000
+const int LEFT = 1; //0001
+const int RIGHT = 2; //0010
+const int BOTTOM = 4; //0100
+const int TOP = 8; //1000
+const int squareSize = 200;
+struct DrawCommand {
+    Shape shape;
+    Algorithm algorithm;
+    COLORREF shapeColor;
+    COLORREF fillColor;
+    std::vector<Point> points;
+    std::vector<Point> controlPoints;
+    FillQuarter quarter = FillQuarter::ALL;
+    int radius = 0;
+    int width = 0, height = 0;
+    int thickness = 1;
+    int curveTension = 0;
+
+    DrawCommand(Shape shape,Algorithm algorithm,COLORREF color) : shape(shape), algorithm(algorithm), shapeColor(color) {}
+    DrawCommand(){}
+};
+
 
 // Function declarations
 int Round(double x);
+
 void DrawPoint(HDC hdc, int x, int y, COLORREF color);
+
 void Draw8Points(HDC hdc, int xc, int yc, int x, int y, COLORREF color);
 
 #endif // ALGONAMES_H

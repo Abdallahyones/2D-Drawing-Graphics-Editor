@@ -1,0 +1,3 @@
+C:/Users/om983/CLionProjects/2D-Drawing-Graphics-Editor/cmake-build-debug/CMakeFiles/untitled11.dir
+C:/Users/om983/CLionProjects/2D-Drawing-Graphics-Editor/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/om983/CLionProjects/2D-Drawing-Graphics-Editor/cmake-build-debug/CMakeFiles/rebuild_cache.dir

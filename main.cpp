@@ -5,10 +5,21 @@
 #include "ConvexAndNonConvexFill.cpp"
 #include "Ellipses_3_algorithms.cpp"
 #include "Flood Fill.cpp"
+#include "ProjectGraphics.cpp"
+#include "clippingLinewithsquare.cpp"
+#include "clippinglinewithrectangle.cpp"
+#include "clippingDrawPointinRectangle.cpp"
+#include "DrawPointInSquare.cpp"
 #include "Common.h"
+#include<iostream>
+#include <fstream>
+#include<vector>
 
+using namespace std;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
+void DrawAlgo(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 COLORREF currentBackgroundColor = RGB(255, 255, 255);
 COLORREF currentShapeColor = RGB(0, 0, 0);
@@ -16,11 +27,67 @@ Shape currentShape = SHAPE_LINE;
 Algorithm currentAlgorithm = ALGO_LINE_DDA;
 HBRUSH backgroundBrush = CreateSolidBrush(currentBackgroundColor);
 
-void SaveToFile() {
 
+vector<DrawCommand> drawHistory;
+void saveToFile(const string& filename) {
+    ofstream out(filename);
+    if (!out) {
+        cerr << "Failed to open file for writing.\n";
+        return;
+    }
+    out << drawHistory.size() << '\n';
+    for (const auto& cmd : drawHistory) {
+        out << static_cast<int>(cmd.shape) << ' '
+            << static_cast<int>(cmd.algorithm) << ' '
+            << cmd.shapeColor << ' ' << cmd.fillColor << ' '
+            << static_cast<int>(cmd.quarter) << ' '
+            << cmd.radius << ' ' << cmd.width << ' ' << cmd.height << ' '
+            << cmd.thickness << ' ' << cmd.curveTension << '\n';
+
+        out << cmd.points.size() << '\n';
+        for (const auto& pt : cmd.points)
+            out << pt << '\n';
+
+        out << cmd.controlPoints.size() << '\n';
+        for (const auto& pt : cmd.controlPoints)
+            out << pt << '\n';
+    }
 }
 
-void LoadFromFile() {}
+void loadFromFile(const string& filename) {
+   ifstream in(filename);
+    if (!in) {
+        throw std::runtime_error("Failed to open file for reading.");
+    }
+    int commandCount;
+    in >> commandCount;
+
+    for (int i = 0; i < commandCount; ++i) {
+        DrawCommand cmd;
+        int shapeInt, algorithmInt, quarterInt;
+        in >> shapeInt >> algorithmInt >> cmd.shapeColor >> cmd.fillColor >> quarterInt
+           >> cmd.radius >> cmd.width >> cmd.height >> cmd.thickness >> cmd.curveTension;
+
+        cmd.shape = static_cast<Shape>(shapeInt);
+        cmd.algorithm = static_cast<Algorithm>(algorithmInt);
+        cmd.quarter = static_cast<FillQuarter>(quarterInt);
+
+        int cnt;
+        in >> cnt;
+        cmd.points.resize(cnt);
+        for (auto& pt : cmd.points)
+            in >> pt;
+
+        int controlCount;
+        in >> controlCount;
+        cmd.controlPoints.resize(controlCount);
+        for (auto& pt : cmd.controlPoints)
+            in >> pt;
+
+        drawHistory.push_back(cmd);
+    }
+    cout<<drawHistory.size();
+}
 
 void ClearScreen(HWND hwnd) {
     HDC hdc = GetDC(hwnd);
@@ -90,24 +157,33 @@ void AddMenus(HWND hwnd) {
     AppendMenu(fillMenu, MF_STRING, 18, "Recursive Flood Fill");
     AppendMenu(fillMenu, MF_STRING, 19, "Non-Recursive Flood Fill");
 
-    // Clipping Submenu
+// Clipping Submenu
     HMENU clipMenu = CreateMenu();
-    AppendMenu(clipMenu, MF_STRING, 22, "Clipping with Rectangle");
-    AppendMenu(clipMenu, MF_STRING, 23, "Clipping with Square");
+
+    HMENU clipRectangleMenu = CreateMenu();
+    AppendMenu(clipRectangleMenu, MF_STRING, 220, "Point");
+    AppendMenu(clipRectangleMenu, MF_STRING, 221, "Line");
+    AppendMenu(clipRectangleMenu, MF_STRING, 222, "Polygon");
+    AppendMenu(clipMenu, MF_POPUP, (UINT_PTR) clipRectangleMenu, "Clipping with Rectangle");
+
+    HMENU clipSquareMenu = CreateMenu();
+    AppendMenu(clipSquareMenu, MF_STRING, 230, "Point");
+    AppendMenu(clipSquareMenu, MF_STRING, 231, "Line");
+    AppendMenu(clipMenu, MF_POPUP, (UINT_PTR) clipSquareMenu, "Clipping with Square");
 
     // Main Algo Menu
     AppendMenu(algoMenu, MF_SEPARATOR, 0, NULL);
-    AppendMenu(algoMenu, MF_POPUP, (UINT_PTR)drawMenu, "Line Algorithms");
-    AppendMenu(algoMenu, MF_POPUP, (UINT_PTR)circleMenu, "Circle Algorithms");
-    AppendMenu(algoMenu, MF_POPUP, (UINT_PTR)ellipseMenu, "Ellipse Algorithms");
-    AppendMenu(algoMenu, MF_POPUP, (UINT_PTR)fillMenu, "Fill Algorithms");
+    AppendMenu(algoMenu, MF_POPUP, (UINT_PTR) drawMenu, "Line Algorithms");
+    AppendMenu(algoMenu, MF_POPUP, (UINT_PTR) circleMenu, "Circle Algorithms");
+    AppendMenu(algoMenu, MF_POPUP, (UINT_PTR) ellipseMenu, "Ellipse Algorithms");
+    AppendMenu(algoMenu, MF_POPUP, (UINT_PTR) fillMenu, "Fill Algorithms");
     AppendMenu(algoMenu, MF_STRING, 20, "Cardinal Spline Curve");
-    AppendMenu(algoMenu, MF_POPUP, (UINT_PTR)clipMenu, "Clipping Algorithms");
+    AppendMenu(algoMenu, MF_POPUP, (UINT_PTR) clipMenu, "Clipping Algorithms");
 
     // Add Menus to MenuBar
-    AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)fileMenu, "File");
-    AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)colorMenu, "Color");
-    AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)algoMenu, "Algorithms");
+    AppendMenu(hMenubar, MF_POPUP, (UINT_PTR) fileMenu, "File");
+    AppendMenu(hMenubar, MF_POPUP, (UINT_PTR) colorMenu, "Color");
+    AppendMenu(hMenubar, MF_POPUP, (UINT_PTR) algoMenu, "Algorithms");
 
     SetMenu(hwnd, hMenubar);
 }
@@ -158,10 +234,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_COMMAND:
             switch (LOWORD(wParam)) {
                 case 1:
-                    SaveToFile();
+                    saveToFile("in.txt");
                     break;
                 case 2:
-                    LoadFromFile();
+                    loadFromFile("in.txt");
                     break;
                 case 3:
                     ClearScreen(hwnd);
@@ -197,13 +273,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     drawingMode = false;
                     break;
                 case 10:
-                    SaveToFile();
+                    saveToFile("in.txt");
                     drawingMode = false;
                     break;
                 case 11:
-                    LoadFromFile();
+                    loadFromFile("in.txt");
                     break;
-
                 case 12:
                     currentAlgorithm = ALGO_CIRCLE_DIRECT;
                     currentShape = SHAPE_CIRCLE;
@@ -238,7 +313,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     drawingMode = true;
                     break;
                 case 18:
-                    currentAlgorithm =ALGO_Recursive ;
+                    currentAlgorithm = ALGO_Recursive;
                     currentShape = SHAPE_Recursive_AND_NOT;
                     drawingMode = true;
                     break;
@@ -259,20 +334,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     currentShape = SHAPE_ELLIPSE;
                     drawingMode = true;
                     break;
-
-                case 22:
-                    currentAlgorithm = ALGO_CLIP_RECTANGLE_POINT_LINE_POLYGON;
-                    currentShape = SHAPE_CLIPING;
-                    drawingMode = true;
-                    break;
-                case 23:
-                    currentAlgorithm = ALGO_CLIP_SQUARE_POINT_LINE;
-                    currentShape = SHAPE_CLIPING;
-                    drawingMode = true;
-                    break;
-
                 case 25 :
-                    currentAlgorithm = ALGO_FILL_NONCONVEX;    
+                    currentAlgorithm = ALGO_FILL_NONCONVEX;
                     currentShape = SHAPE_Convex;
                     drawingMode = true;
                 case 100:
@@ -315,6 +378,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     currentShape = SHAPE_ELLIPSE;
                     drawingMode = true;
                     break;
+                case 220:
+                    currentShape = SHAPE_CLIPING;
+                    currentAlgorithm = ALGO_CLIP_RECTANGLE_POINT;
+                    drawingMode = true;
+                    break;
+                case 221:
+                    currentShape = SHAPE_CLIPING;
+                    currentAlgorithm = ALGO_CLIP_RECTANGLE_LINE;
+                    drawingMode = true;
+                    break;
+                case 222:
+                    currentShape = SHAPE_CLIPING;
+                    currentAlgorithm = ALGO_CLIP_RECTANGLE_POLYGON;
+                    drawingMode = true;
+                    break;
+                case 230:
+                    currentShape = SHAPE_CLIPING;
+                    currentAlgorithm = ALGO_CLIP_SQUARE_POINT;
+                    drawingMode = true;
+                    break;
+                case 231:
+                    currentShape = SHAPE_CLIPING;
+                    currentAlgorithm = ALGO_CLIP_SQUARE_LINE;
+                    drawingMode = true;
+                    break;
 
 
             }
@@ -322,25 +410,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
         case WM_LBUTTONDOWN:
             if (drawingMode) {
-                if (currentShape == SHAPE_LINE) {
-                    drawLine(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor);
-                } else if (currentShape == SHAPE_CIRCLE) {
-                    drawCircle(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor);
-                } else if (currentShape == SHAPE_ELLIPSE) {
-                    drawEllipses(hwnd, msg, wParam, lParam, currentAlgorithm , currentShapeColor);
-                } else if (currentShape == SHAPE_Convex) {
-                    drawConvex(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor);
-                } else if (currentShape == SHAPE_Recursive_AND_NOT) {
-                    drawRecursive(hwnd, msg, wParam, lParam, currentAlgorithm , currentShapeColor);
-                }
-                else if(currentShape == SHAPE_FILLING){
-
-                }else if(currentShape == SHAPE_CLIPING){
-
-                }else if (currentShape == Spline_Curve){
-
-
-                }
+                DrawAlgo(hwnd, msg, wParam, lParam);
             }
             break;
 
@@ -355,4 +425,37 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
     return 0;
 }
+
+void DrawAlgo(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    DrawCommand cmd(currentShape, currentAlgorithm, currentShapeColor);
+    if (currentShape == SHAPE_LINE) {
+        drawLine(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor, cmd);
+    } else if (currentShape == SHAPE_CIRCLE) {
+        drawCircle(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor, cmd);
+    } else if (currentShape == SHAPE_ELLIPSE) {
+        drawEllipses(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor, cmd);
+    } else if (currentShape == SHAPE_Convex) {
+        drawConvex(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor, cmd);
+    } else if (currentShape == SHAPE_Recursive_AND_NOT) {
+        drawRecursive(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor, cmd);
+    } else if (currentShape == SHAPE_FILLING) {
+
+
+    } else if (currentShape == SHAPE_CLIPING) {
+        if (currentAlgorithm == ALGO_CLIP_RECTANGLE_POINT) {
+            drawPointRectangle(hwnd, msg, wParam, lParam, currentShapeColor, cmd);
+        } else if (currentAlgorithm == ALGO_CLIP_RECTANGLE_LINE) {
+            drawLineRectangle(hwnd, msg, wParam, lParam, currentShapeColor, cmd);
+        } else if (currentAlgorithm == ALGO_CLIP_RECTANGLE_POLYGON) {
+            drawRectanglePolygon(hwnd, msg, wParam, lParam, currentShapeColor, cmd);
+        } else if (currentAlgorithm == ALGO_CLIP_SQUARE_POINT) {
+            drawPointSquare(hwnd, msg, wParam, lParam, currentShapeColor, cmd);
+        } else if (currentAlgorithm == ALGO_CLIP_SQUARE_LINE) {
+            drawLineSquare(hwnd, msg, wParam, lParam, currentShapeColor ,cmd);
+        }
+    } else if (currentShape == Spline_Curve) {
+    }
+    drawHistory.emplace_back(cmd);
+}
+
 
