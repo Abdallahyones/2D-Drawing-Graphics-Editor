@@ -66,7 +66,7 @@ void CircleIterativePolar(HDC hdc, int xc, int yc, int R, COLORREF color)
 // 4) MidPoint
 void CircleBresenham(HDC hdc, int xc, int yc, int R, COLORREF color)
 {
-    // First Octant
+   // Second Octant
     int x = 0, y = R;
     int d = 1 - R;
     Draw8Points(hdc, xc, yc, x, y, color);
@@ -86,7 +86,7 @@ void CircleBresenham(HDC hdc, int xc, int yc, int R, COLORREF color)
 // 4) ModifiedMidPoint
 void CircleModifiedBresenham(HDC hdc, int xc, int yc, int R, COLORREF color)
 {
-    // First Octant
+   // Second Octant
     int x = 0, y = R;
     int d = 1 - R;
     int c1 = 3, c2 = 5 - 2 * R;
