@@ -105,15 +105,19 @@ void DrawScanLines(HDC hdc, ScanLineEntry table[], COLORREF fillColor) {
     }
 }
 
-void ConvexFill(HDC hdc, POINT vertices[], int vertexCount, COLORREF fillColor) {
-    ScanLineEntry *table = new ScanLineEntry[MAX_SCANLINES];
-    InitializeScanlineTable(table);
+void ConvertPolyonToTable(POINT vertices[], int vertexCount, ScanLineEntry table[]) {
     POINT previousVertex = vertices[vertexCount - 1];
     for (int i = 0; i < vertexCount; i++) {
         POINT currentVertex = vertices[i];
         ScanEdge(previousVertex, currentVertex, table);
         previousVertex = vertices[i];
     }
+}
+
+void ConvexFill(HDC hdc, POINT vertices[], int vertexCount, COLORREF fillColor) {
+    ScanLineEntry* table = new ScanLineEntry[MAX_SCANLINES];
+    InitializeScanlineTable(table);
+    ConvertPolyonToTable(vertices, vertexCount, table);
     DrawScanLines(hdc, table, fillColor);
     delete[] table;
 }
