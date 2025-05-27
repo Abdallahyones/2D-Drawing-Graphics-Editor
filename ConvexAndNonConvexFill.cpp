@@ -175,9 +175,6 @@ void GeneralPolygonFill(HDC hdc, POINT *polygonVertices, int vertexCount, COLORR
             int leftX = (int) ceil(currentEdge->currentX);
             ++currentEdge;
 
-            // If no matching right edge, break
-            if (currentEdge == activeEdges.end()) break;
-
             // Get right edge x position (rounded down)
             int rightX = (int) floor(currentEdge->currentX);
 
