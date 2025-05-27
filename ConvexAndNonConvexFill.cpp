@@ -165,7 +165,6 @@ void GeneralPolygonFill(HDC hdc, POINT *polygonVertices, int vertexCount, COLORR
     // Initialize the active edge list with edges from the first non-empty scanline
     EdgeList activeEdges = edgeTable[currentScanline];
 
-    // Process each scanline from bottom to top
     while (!activeEdges.empty()) {
         // Sort active edges by their current x position (left to right)
         activeEdges.sort();
