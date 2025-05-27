@@ -179,9 +179,7 @@ void GeneralPolygonFill(HDC hdc, POINT *polygonVertices, int vertexCount, COLORR
             int rightX = (int) floor(currentEdge->currentX);
 
             // Draw horizontal line between edges
-            if (leftX <= rightX) {  // Only draw if valid span
-                DrawLineDDa(hdc, leftX, currentScanline, rightX, currentScanline, fillColor);
-            }
+            DrawLineDDa(hdc, leftX, currentScanline, rightX, currentScanline, fillColor);
 
             ++currentEdge;
         }
