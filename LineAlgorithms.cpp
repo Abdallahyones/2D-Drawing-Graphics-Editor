@@ -7,7 +7,7 @@
 using namespace std;
 
 // --------------------------------------------------------------------- Utilities  -----------------------------------------------------------------
-void swap(int& a, int& b) {
+void swap(int &a, int &b) {
     int temp = a;
     a = b;
     b = temp;
@@ -29,24 +29,22 @@ void DrawLineDDA(HDC hdc, int startX, int startY, int endX, int endY, COLORREF c
         int currentX = startX;
         int xIncrement = dx > 0 ? 1 : -1;
         double currentY = startY;
-        double yIncrement = dx != 0 ? (double)dy / dx * xIncrement : 0;
+        double yIncrement = dx != 0 ? (double) dy / dx * xIncrement : 0;
         while (currentX != endX) {
             currentX += xIncrement;
             currentY += yIncrement;
-            SetPixel(hdc, currentX, Round(currentY), color);
+            SetPixel(hdc, currentX, Round(currentY), RGB(0,0,0));
         }
-    }
-    else
-    {
+    } else {
         // Y-dominant case (not used for horizontal scanlines)
         int currentY = startY;
         int yIncrement = dy > 0 ? 1 : -1;
         double currentX = startX;
-        double xIncrement = dy != 0 ? (double)dx / dy * yIncrement : 0;
+        double xIncrement = dy != 0 ? (double) dx / dy * yIncrement : 0;
         while (currentY != endY) {
             currentY += yIncrement;
             currentX += xIncrement;
-            SetPixel(hdc, Round(currentX), currentY, color);
+            SetPixel(hdc, Round(currentX), currentY, RGB(0,0,0));
         }
     }
 }
@@ -60,8 +58,7 @@ void DrawLineBresenham(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color) 
     int x = x1, y = y1;
 
     // Adjust for |slope| <= 1 or |slope| > 1
-    if (dx >= dy)
-    { // |slope| <= 1, increment x, decide y
+    if (dx >= dy) { // |slope| <= 1, increment x, decide y
         int d = 2 * dy - dx;
         int d1 = 2 * (dy - dx); // Change when y increments
         int d2 = 2 * dy;        // Change when y doesn't increment
@@ -71,16 +68,13 @@ void DrawLineBresenham(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color) 
             x += xStep;
             if (d < 0) {
                 d += d2; // Only move in x direction
-            }
-            else {
+            } else {
                 y += yStep;
                 d += d1; // Move in both x and y directions
             }
             SetPixel(hdc, x, y, color);
         }
-    }
-    else
-    { // |slope| > 1, increment y, decide x
+    } else { // |slope| > 1, increment y, decide x
         int d = 2 * dx - dy;
         int d1 = 2 * (dx - dy);
         int d2 = 2 * dx;
@@ -90,8 +84,7 @@ void DrawLineBresenham(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color) 
             y += yStep;
             if (d < 0) {
                 d += d2; // Only move in y direction
-            }
-            else {
+            } else {
                 x += xStep;
                 d += d1; // Move in both x and y directions
             }
@@ -99,6 +92,7 @@ void DrawLineBresenham(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color) 
         }
     }
 }
+
 // 3) LineParametric
 void DrawLineParametric(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color) {
     // X = alpha1*T + Beta1
@@ -127,69 +121,75 @@ Point points[2];
 int pointCount = 0;
 bool drawing = false;
 
-LRESULT WINAPI drawLine(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam   , Algorithm currentAlgorithm , COLORREF color , DrawCommand &cmd) {
+void ChooseLineAlgo(const Algorithm &currentAlgorithm, Point points[], COLORREF color, HDC hdc);
+
+LRESULT WINAPI drawLine(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm currentAlgorithm, COLORREF color,
+                        DrawCommand &cmd) {
     HDC hdc;
 
     switch (msg) {
-    case WM_LBUTTONDOWN:
-        if (pointCount < 2) {
-            points[pointCount].x = LOWORD(lParam);
-            points[pointCount].y = HIWORD(lParam);
-            pointCount++;
+        case WM_LBUTTONDOWN:
+            if (pointCount < 2) {
+                points[pointCount].x = LOWORD(lParam);
+                points[pointCount].y = HIWORD(lParam);
+                pointCount++;
 
-            cmd.points.emplace_back(points[0]);
-            hdc = GetDC(hwnd);
-            if (pointCount == 1) {
-                DrawPoint(hdc, points[0].x, points[0].y, color);
-            }
-            else if (pointCount == 2) {
+                cmd.points.emplace_back(points[0]);
+                hdc = GetDC(hwnd);
+
                 cmd.points.emplace_back(points[1]);
                 // Draw line between the two points
-                switch (currentAlgorithm) {
-                case ALGO_LINE_DDA:
-                    DrawLineDDA(hdc, points[0].x, points[0].y, points[1].x, points[1].y,color );
-                    break;
-                case ALGO_LINE_BRESENHAM:
-                    DrawLineBresenham(hdc, points[0].x, points[0].y, points[1].x, points[1].y, color );
-                    break;
-                case ALGO_LINE_MIDPOINT:
-                    DrawLineParametric(hdc, points[0].x, points[0].y, points[1].x, points[1].y, color);
-                    break;
+                if (pointCount == 2) {
+                    ChooseLineAlgo(currentAlgorithm, points, color, hdc);
+                    pointCount = 0; // Reset for next line
+                drawHistory.emplace_back(cmd);
                 }
-                // Draw second point
-                DrawPoint(hdc, points[1].x, points[1].y,color);
-                pointCount = 0; // Reset for next line
+                ReleaseDC(hwnd, hdc);
             }
+            break;
 
+        case WM_KEYDOWN:
+            hdc = GetDC(hwnd);
             ReleaseDC(hwnd, hdc);
+            break;
+
+        case WM_PAINT: {
+            PAINTSTRUCT ps;
+            hdc = BeginPaint(hwnd, &ps);
+            EndPaint(hwnd, &ps);
         }
-        break;
+            break;
 
-    case WM_KEYDOWN:
-        hdc = GetDC(hwnd);
-        ReleaseDC(hwnd, hdc);
-        break;
+        case WM_CLOSE:
+            DestroyWindow(hwnd);
+            break;
 
-    case WM_PAINT:
-    {
-        PAINTSTRUCT ps;
-        hdc = BeginPaint(hwnd, &ps);
-        EndPaint(hwnd, &ps);
-    }
-    break;
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            break;
 
-    case WM_CLOSE:
-        DestroyWindow(hwnd);
-        break;
-
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-
-    default:
-        return DefWindowProc(hwnd, msg, wParam, lParam);
+        default:
+            return DefWindowProc(hwnd, msg, wParam, lParam);
     }
     return 0;
+}
+
+void ChooseLineAlgo(const Algorithm &currentAlgorithm, Point points[], COLORREF color, HDC hdc) {
+    DrawPoint(hdc, points[0].x, points[0].y, color);
+    switch (currentAlgorithm) {
+        case ALGO_LINE_DDA:
+            DrawLineDDA(hdc, points[0].x, points[0].y, points[1].x, points[1].y, color);
+            break;
+        case ALGO_LINE_BRESENHAM:
+            DrawLineBresenham(hdc, points[0].x, points[0].y, points[1].x, points[1].y, color);
+            break;
+        case ALGO_LINE_MIDPOINT:
+            DrawLineParametric(hdc, points[0].x, points[0].y, points[1].x, points[1].y, color);
+            break;
+    }
+    DrawPoint(hdc, points[1].x, points[1].y, color);
+
+
 }
 
 

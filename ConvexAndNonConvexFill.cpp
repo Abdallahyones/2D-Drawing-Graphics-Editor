@@ -72,7 +72,7 @@ void InitializeScanlineTable(ScanLineEntry table[]) {
     }
 }
 
-void ScanEdge(POINT vertexStart, POINT vertexEnd, ScanLineEntry table[]) {
+void ScanEdge(Point vertexStart, Point vertexEnd, ScanLineEntry table[]) {
     if (vertexStart.y == vertexEnd.y) {
         return;
     }
@@ -105,21 +105,25 @@ void DrawScanLines(HDC hdc, ScanLineEntry table[], COLORREF fillColor) {
     }
 }
 
-void ConvexFill(HDC hdc, POINT vertices[], int vertexCount, COLORREF fillColor) {
-    ScanLineEntry *table = new ScanLineEntry[MAX_SCANLINES];
-    InitializeScanlineTable(table);
-    POINT previousVertex = vertices[vertexCount - 1];
+void ConvertPolyonToTable(Point vertices[], int vertexCount, ScanLineEntry table[]) {
+    Point previousVertex = vertices[vertexCount - 1];
     for (int i = 0; i < vertexCount; i++) {
-        POINT currentVertex = vertices[i];
+        Point currentVertex = vertices[i];
         ScanEdge(previousVertex, currentVertex, table);
         previousVertex = vertices[i];
     }
+}
+
+void ConvexFill(HDC hdc, Point vertices[], int vertexCount, COLORREF fillColor) {
+    ScanLineEntry* table = new ScanLineEntry[MAX_SCANLINES];
+    InitializeScanlineTable(table);
+    ConvertPolyonToTable(vertices, vertexCount, table);
     DrawScanLines(hdc, table, fillColor);
     delete[] table;
 }
 
 // ----------------------------------------------- General Polygon Fill Functions -------------------------------------
-PolygonEdge InitEdgeRec(POINT &vertexStart, POINT &vertexEnd) {
+PolygonEdge InitEdgeRec(Point &vertexStart, Point &vertexEnd) {
     if (vertexStart.y > vertexEnd.y) swap(vertexStart, vertexEnd);
     PolygonEdge rec;
     rec.currentX = vertexStart.x;
@@ -128,21 +132,21 @@ PolygonEdge InitEdgeRec(POINT &vertexStart, POINT &vertexEnd) {
     return rec;
 }
 
-void BuildEdgeTable(POINT *polygonVertices, int vertexCount, EdgeList table[]) {
-    POINT previousVertex = polygonVertices[vertexCount - 1];
+void BuildEdgeTable(Point *polygonVertices, int vertexCount, EdgeList table[]) {
+    Point previousVertex = polygonVertices[vertexCount - 1];
     for (int i = 0; i < vertexCount; i++) {
-        POINT currentVertex = polygonVertices[i];
+        Point currentVertex = polygonVertices[i];
         if (previousVertex.y == currentVertex.y) {
             previousVertex = currentVertex;
             continue; // Skip horizontal edges
         }
         PolygonEdge rec = InitEdgeRec(previousVertex, currentVertex);
-        table[previousVertex.y].push_back(rec);
+        table[(int)previousVertex.y].push_back(rec);
         previousVertex = polygonVertices[i];
     }
 }
 
-void GeneralPolygonFill(HDC hdc, POINT *polygonVertices, int vertexCount, COLORREF fillColor) {
+void GeneralPolygonFill(HDC hdc, Point *polygonVertices, int vertexCount, COLORREF fillColor) {
     EdgeList *edgeTable = new EdgeList[MAX_SCANLINES];
     BuildEdgeTable(polygonVertices, vertexCount, edgeTable);
 
@@ -161,7 +165,6 @@ void GeneralPolygonFill(HDC hdc, POINT *polygonVertices, int vertexCount, COLORR
     // Initialize the active edge list with edges from the first non-empty scanline
     EdgeList activeEdges = edgeTable[currentScanline];
 
-    // Process each scanline from bottom to top
     while (!activeEdges.empty()) {
         // Sort active edges by their current x position (left to right)
         activeEdges.sort();
@@ -172,16 +175,11 @@ void GeneralPolygonFill(HDC hdc, POINT *polygonVertices, int vertexCount, COLORR
             int leftX = (int) ceil(currentEdge->currentX);
             ++currentEdge;
 
-            // If no matching right edge, break
-            if (currentEdge == activeEdges.end()) break;
-
             // Get right edge x position (rounded down)
             int rightX = (int) floor(currentEdge->currentX);
 
             // Draw horizontal line between edges
-            if (leftX <= rightX) {  // Only draw if valid span
-                DrawLineDDa(hdc, leftX, currentScanline, rightX, currentScanline, fillColor);
-            }
+            DrawLineDDa(hdc, leftX, currentScanline, rightX, currentScanline, fillColor);
 
             ++currentEdge;
         }
@@ -210,12 +208,10 @@ void GeneralPolygonFill(HDC hdc, POINT *polygonVertices, int vertexCount, COLORR
     }
     delete[] edgeTable;
 }
-
-
 // -------------------------------------------- Window Procedure --------------------------------------------------
 LRESULT CALLBACK
 drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, COLORREF color, DrawCommand &cmd) {
-    static vector<POINT> vertices;
+    static vector<Point> vertices;
     HDC hdc;
     int x, y;
 
@@ -224,17 +220,25 @@ drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, CO
             hdc = GetDC(hwnd);
             x = LOWORD(lParam);
             y = HIWORD(lParam);
-            cmd.points.emplace_back(x, y);
+
             // Add vertex
-            vertices.push_back({x, y});
-            // Draw vertex point
+            vertices.emplace_back(x, y);
+            // Draw vertex Point
             SetPixel(hdc, x, y, color);
             // Draw line to previous vertex if exists using DDA
             if (vertices.size() > 1) {
-                POINT prev = vertices[vertices.size() - 2];
-                POINT curr = vertices[vertices.size() - 1];
-                cmd.points.emplace_back(curr.x, curr.y);
+                Point prev = vertices[vertices.size() - 2];
+                Point curr = vertices[vertices.size() - 1];
+                cmd.points = vertices;
+                cmd.fillColor = color;
                 DrawLineDDa(hdc, prev.x, prev.y, curr.x, curr.y, color);
+                if(drawHistory.empty()||drawHistory.back().shape !=ALGO_FILL_CONVEX)
+                {
+                    drawHistory.emplace_back(cmd);
+                }else
+                {
+                    drawHistory.back().points = vertices;
+                }
             }
             ReleaseDC(hwnd, hdc);
             break;
@@ -242,14 +246,11 @@ drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, CO
             if (vertices.size() >= 3) {
                 hdc = GetDC(hwnd);
                 // Draw the closing edge using DDA
-                POINT first = vertices[0];
-                POINT last = vertices[vertices.size() - 1];
-                for (int i = 2; i < vertices.size(); i++) {
-                    cmd.points.emplace_back(vertices[i].x, vertices[i].y);
-                }
+                Point first = vertices[0];
+                Point last = vertices[vertices.size() - 1];
                 DrawLineDDa(hdc, last.x, last.y, first.x, first.y, color);
                 if (algo == ALGO_FILL_CONVEX) {
-                    ConvexFill(hdc, vertices.data(), vertices.size(), color);
+                    ConvexFill(hdc, vertices.data(), vertices.size(),color);
                 } else {
                     GeneralPolygonFill(hdc, vertices.data(), vertices.size(), color);
                 }
@@ -282,3 +283,15 @@ drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, CO
     return 0;
 }
 
+void ChooseAndFillPolygon(const HDC& hdc,  vector<Point>& vertices, COLORREF color, Algorithm algo) {
+
+
+
+    DrawLineDDa(hdc, vertices[0].x, vertices[0].y, vertices.back().x, vertices.back().y, color);
+    if (algo == ALGO_FILL_CONVEX) {
+        ConvexFill(hdc, vertices.data(), vertices.size(), color);
+    } else {
+        GeneralPolygonFill(hdc, vertices.data(), vertices.size(), color);
+    }
+
+}

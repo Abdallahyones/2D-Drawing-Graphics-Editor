@@ -29,6 +29,7 @@ LRESULT drawPointSquare(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , COLORREF c  ,D
             int y = HIWORD(lp);
             cmd.points.emplace_back(x,y);
             DrawPointSquare(hdc, x, y,c);
+            drawHistory.emplace_back(cmd);
             ReleaseDC(hwnd, hdc);
             break;
         }

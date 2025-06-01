@@ -76,7 +76,9 @@ void getIntersection(int CodeOut, int &x, int &y, int x1, int y1, int x2, int y2
 }
 
 // Cohen-sutherland line clipping
-void CohenSutherlandLineRectangle(HDC hdc, int x1, int y1, int x2, int y2, COLORREF color) {
+void CohenSutherlandLineRectangle(HDC hdc, Point p1 ,  Point p2, COLORREF color) {
+    auto[x1 , y1] = p1;
+    auto[x2 , y2] = p2;
     int origX1 = x1, origY1 = y1, origX2 = x2, origY2 = y2;
     int code1 = ComupteCodeRetangle(x1, y1);
     int code2 = ComupteCodeRetangle(x2, y2);
@@ -146,7 +148,8 @@ LRESULT drawLineRectangle(HWND hwnd, UINT m, WPARAM wp, LPARAM lp, COLORREF colo
             } else {
                 x2 = x;
                 y2 = y;
-                CohenSutherlandLineRectangle(hdc, x1, y1, x2, y2, color); // Clip and draw
+                CohenSutherlandLineRectangle(hdc,cmd.points[0] , cmd.points[1], color); // Clip and draw
+                drawHistory.emplace_back(cmd);
                 isFirstClick = true;
             }
 

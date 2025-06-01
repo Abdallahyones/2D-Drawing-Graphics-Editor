@@ -1,5 +1,5 @@
 #include "Common.h"
-
+std::vector<DrawCommand> drawHistory;
 // Constructor implementation
 Point::Point(double x, double y) : x(x), y(y) {}
 

@@ -1,6 +1,9 @@
 #include <windows.h>
 #include <queue>
 #include "Common.h"
+
+void DrawRec(const Algorithm &algo, HDC hdc, Point p ,COLORREF boundaryColor);
+
 using namespace std;
 
 
@@ -75,16 +78,8 @@ LRESULT WINAPI drawRecursive(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ,Algorith
         cmd.radius= 150;
         COLORREF boundaryColor =color; // black boundary
         // Draw the circle centered at (x, y) with radius 150
-        CircleBresenhamM(hdc, x, y, 150, RGB(0, 0, 0));
-
-        // Call the selected flood fill method
-        if (algo == ALGO_Recursive) {
-            FloodFillOneOctantRecursive(hdc, x, y, 0, 0, boundaryColor, RGB(0,255,0));
-        }
-        else {
-            FloodFillNonRecursive(hdc, x, y, boundaryColor, RGB(0,255,0));
-        }
-
+        DrawRec(algo, hdc, cmd.points.back(), boundaryColor);
+        drawHistory.emplace_back(cmd);
         ReleaseDC(hwnd, hdc);
         break;
     }
@@ -102,5 +97,16 @@ LRESULT WINAPI drawRecursive(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ,Algorith
         return DefWindowProc(hwnd, msg, wp, lp);
     }
     return 0;
+}
+
+void DrawRec(const Algorithm &algo, HDC hdc, Point p ,COLORREF boundaryColor) {
+    auto[x,y] = p;
+    CircleBresenhamM(hdc, x, y, 150, RGB(0, 0, 0));
+    if (algo == ALGO_Recursive) {
+        FloodFillOneOctantRecursive(hdc, x, y, 0, 0, boundaryColor, RGB(0,255,0));
+    }
+    else {
+        FloodFillNonRecursive(hdc, x, y, boundaryColor, RGB(0,255,0));
+    }
 }
 

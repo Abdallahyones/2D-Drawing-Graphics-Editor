@@ -13,7 +13,9 @@ int selectedAlgorithm = ID_ELLIPSE_POLAR;
 
 
 /**---------------------Draw 4 points for similarity------------------------------**/
-// for drawing point and 3 siblings for ellipse (similarity) 
+void ChooseEllipsesAlgo(const Algorithm &algo, COLORREF color, HDC hdc, Point p , Point p2);
+
+// for drawing point and 3 siblings for ellipse (similarity)
 void Draw4Points(HDC hdc, int xc, int yc, int x, int y, COLORREF c) {
     // original
     SetPixel(hdc, xc + x, yc + y, c);
@@ -140,25 +142,15 @@ LRESULT drawEllipses(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , Algorithm algo ,C
         if (count == 1) {
             xc = LOWORD(lp);
             yc = HIWORD(lp);
-            SetPixel(hdc, xc, yc, color);
+
             cmd.points.emplace_back(xc , yc);
         }
         else if (count == 2) {
             x = LOWORD(lp);
             y = HIWORD(lp);
-            int a = abs(x - xc), b = abs(y - yc);
             cmd.points.emplace_back(x , y);
-            switch (algo) {
-            case ALGO_ELLIPSE_POLAR :
-                Drawellipsepolar(hdc, xc, yc, a, b,color);
-                break;
-            case ALGO_ELLIPSE_DIRECT:
-                Drawellipsecartesian(hdc, xc, yc, a, b, color);
-                break;
-            case ALGO_ELLIPSE_MIDPOINT:
-                Drawellipsebresenham(hdc, xc, yc, a, b, color);
-                break;
-            }
+            ChooseEllipsesAlgo(algo, color, hdc, cmd.points[0] , cmd.points[1]);
+            drawHistory.emplace_back(cmd);
             count = 0;
         }
         ReleaseDC(hwnd, hdc);
@@ -171,5 +163,23 @@ LRESULT drawEllipses(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , Algorithm algo ,C
     default:return DefWindowProc(hwnd, m, wp, lp);
     }
     return 0;
+}
+
+void ChooseEllipsesAlgo(const Algorithm &algo, COLORREF color, HDC hdc, Point p , Point p2) {
+    auto[xc,yc] = p;
+    auto[xe , ye] = p2;
+    int a = abs(xe - xc), b = abs(ye - yc);
+    SetPixel(hdc, xc, yc, color);
+    switch (algo) {
+    case ALGO_ELLIPSE_POLAR :
+        Drawellipsepolar(hdc, xc, yc, a, b,color);
+        break;
+    case ALGO_ELLIPSE_DIRECT:
+        Drawellipsecartesian(hdc, xc, yc, a, b, color);
+        break;
+    case ALGO_ELLIPSE_MIDPOINT:
+        Drawellipsebresenham(hdc, xc, yc, a, b, color);
+        break;
+    }
 }
 
