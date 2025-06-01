@@ -180,6 +180,7 @@ void GeneralPolygonFill(HDC hdc, Point *polygonVertices, int vertexCount, COLORR
 
             // Draw horizontal line between edges
             DrawLineDDa(hdc, leftX, currentScanline, rightX, currentScanline, fillColor);
+            DrawLineDDa(hdc, leftX, currentScanline, rightX, currentScanline, fillColor);
 
             ++currentEdge;
         }
