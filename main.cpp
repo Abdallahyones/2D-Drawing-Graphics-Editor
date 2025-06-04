@@ -26,6 +26,7 @@ void DrawAlgoFromFile(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, DrawCom
 
 COLORREF currentBackgroundColor = RGB(255, 255, 255);
 COLORREF currentShapeColor = RGB(0, 0, 0);
+COLORREF currentFillColor = RGB(0, 255, 0); 
 Shape currentShape = SHAPE_LINE;
 Algorithm currentAlgorithm = ALGO_LINE_DDA;
 HBRUSH backgroundBrush = CreateSolidBrush(currentBackgroundColor);
@@ -148,6 +149,7 @@ void AddMenus(HWND hwnd) {
     // Color Menu
     AppendMenu(colorMenu, MF_STRING, 7, "Change Background Color");
     AppendMenu(colorMenu, MF_STRING, 8, "Change Shape Color");
+    AppendMenu(colorMenu, MF_STRING, 9, "Change Fill Color");
 
     // Circle Submenu
     HMENU circleMenu = CreateMenu();
@@ -286,9 +288,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     break;
 
                 case 9:
-                    ClearScreen(hwnd);
-                    drawingMode = false;
+                    currentFillColor = OpenColorDialog(hwnd, currentFillColor);
                     break;
+                
                 case 10:
                     saveToFile("in.txt");
                     drawingMode = false;
@@ -436,8 +438,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 case 304:
                     hCurrentCursor = LoadCursor(NULL, IDC_HELP);
                     break;
-
-
+                case 305: 
+                    ClearScreen(hwnd);
+                    drawingMode = false;
+                    break;
             }
             break;
 
@@ -476,7 +480,7 @@ void DrawAlgo(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     } else if (currentShape == SHAPE_Convex) {
         drawConvex(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor, cmd);
     } else if (currentShape == SHAPE_Recursive_AND_NOT) {
-        drawRecursive(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor, cmd);
+        drawRecursive(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor,currentFillColor,cmd);
     } else if (currentShape == SHAPE_FILLING || currentShape == Spline_Curve) {
         FillingAlgo(hwnd, msg, wParam, lParam, currentAlgorithm, cmd);
     } else if (currentShape == SHAPE_CLIPING) {
@@ -512,7 +516,7 @@ void DrawAlgoFromFile(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, DrawCom
             ChoosedrawFilling(hwnd, msg, wParam, lParam, cmd);
             break;
         case SHAPE_Recursive_AND_NOT:
-            DrawRec(currentAlgorithm, hdc, cmd.points[0], cmd.shapeColor);
+            DrawRec(cmd.algorithm/**/, hdc, cmd.points[0], cmd.shapeColor,cmd.fillColor);
             break;
         case Spline_Curve  :
             ChoosedrawFilling(hwnd, msg, wParam, lParam, cmd);
@@ -522,11 +526,6 @@ void DrawAlgoFromFile(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, DrawCom
 
     }
     switch (cmd.algorithm) {
-
-
-
-
-
         // Clipping
         case ALGO_CLIP_RECTANGLE_LINE:
          //   ClippingPoint(  cmd.shapeColor ,hdc ,cmd.points.back());
@@ -549,5 +548,3 @@ void DrawAlgoFromFile(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, DrawCom
     }
     ReleaseDC(hwnd, hdc);
 }
-
-
