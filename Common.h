@@ -63,9 +63,6 @@ enum Algorithm {
     ALGO_CLIP_SQUARE_POINT,
     ALGO_CLIP_SQUARE_LINE
 };
-enum class FillQuarter {
-    FIRST = 1, SECOND, THIRD, FOURTH, ALL
-};
 
 // Struct for point
 struct Point {
@@ -93,11 +90,12 @@ struct DrawCommand {
     Algorithm algorithm;
     COLORREF shapeColor;
     COLORREF fillColor;
+
     std::vector<Point> points;
     std::vector<Point> controlPoints;
-    FillQuarter quarter = FillQuarter::ALL;
+    int quarter =0;
     int radius = 0;
-    int width = 0, height = 0;
+
     int thickness = 1;
     int curveTension = 0;
 
@@ -106,6 +104,7 @@ struct DrawCommand {
 };
 
 
+extern vector<DrawCommand> drawHistory;
 // Function declarations
 int Round(double x);
 
