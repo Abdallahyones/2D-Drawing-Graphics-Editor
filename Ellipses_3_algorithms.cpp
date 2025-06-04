@@ -7,9 +7,10 @@
 #define ID_ELLIPSE_POLAR       3
 #define ID_ELLIPSE_CARTESIAN   4
 #define ID_ELLIPSE_BRESENHAM   5
+#define ID_ELLIPSE_BRESENHAM_MIDPOINT 6
+#define ID_ELLIPSE_ITERATIVE_POLAR 7
 HBRUSH hBackgroundBrush = CreateSolidBrush(RGB(192, 192, 192));
 int selectedAlgorithm = ID_ELLIPSE_POLAR;
-
 
 
 /**---------------------Draw 4 points for similarity------------------------------**/
@@ -94,12 +95,86 @@ void Drawellipsebresenham(HDC hdc, int xc, int yc, int a, int b, COLORREF c) {
     }
 }
 
+/**------------------Bresenham (midpoint)-------------------------------**/
+void DrawellipseModifiedMidpoint(HDC hdc, int xc, int yc, int a, int b, COLORREF c) {
+    int x = 0;
+    int y = b;
 
+    int a2 = a * a;
+    int b2 = b * b;
+
+    int twoA2 = 2 * a2;
+    int twoB2 = 2 * b2;
+
+    int dx = 2 * b2 * x;
+    int dy = 2 * a2 * y;
+
+    // Region 1: |slope| > 1 (starts at (0, b))
+    int d1 = (4 * b2) - (4 * a2 * b) + a2;  // Scaled by 4 to avoid floating point
+    Draw4Points(hdc, xc, yc, x, y, c);
+
+    while (dx < dy) {
+        if (d1 < 0) {
+            d1 += (4 * dx) + (4 * b2);
+        }
+        else {
+            y--;
+            dy -= twoA2;
+            d1 += (4 * dx) - (4 * dy) + (4 * b2);
+        }
+        x++;
+        dx += twoB2;
+        Draw4Points(hdc, xc, yc, x, y, c);
+    }
+
+    // Region 2: |slope| <= 1 (starts fresh at (a, 0))
+    x = a;
+    y = 0;
+    dx = 2 * b2 * x;
+    dy = 2 * a2 * y;
+
+    int d2 = (4 * a2) - (4 * a * b2) + b2;  // Scaled by 4 to avoid floating point
+    Draw4Points(hdc, xc, yc, x, y, c);
+
+    while (dx > dy) {
+        if (d2 < 0) {
+            d2 += (4 * dy) + (4 * a2);
+        }
+        else {
+            x--;
+            dx -= twoB2;
+            d2 += (4 * dy) - (4 * dx) + (4 * a2);
+        }
+        y++;
+        dy += twoA2;
+        Draw4Points(hdc, xc, yc, x, y, c);
+    }
+}
+
+/**------------------Iterative polar-------------------------------**/
+void DrawellipseIterativePolar(HDC hdc, int xc, int yc, int A, int B, COLORREF color)
+{
+    // First Quarter
+    double x = A, y = 0;
+    double dtheta = 1.0 / max(A, B);
+    double cdtheta = cos(dtheta), sdtheta = sin(dtheta);
+    Draw4Points(hdc, xc, yc, A, 0, color);
+    while (x > 0)
+    {
+        double x1 = x * cdtheta - A * y / B * sdtheta;
+        y = B * x / A * sdtheta + y * cdtheta;
+        x = x1;
+        Draw4Points(hdc, xc, yc, round(x), round(y), color);
+    }
+}
+
+
+Point p1,p22;
 
 LRESULT drawEllipses(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , Algorithm algo ,COLORREF color , DrawCommand& cmd)
 {
     HDC hdc;
-    static int xc, yc, x, y, count=0, xc1, yc1, count1 = 0, x1,y1;
+    static int xc, yc, x, y, count=0;
     switch (m)
     {
     case WM_ERASEBKGND:
@@ -129,6 +204,8 @@ LRESULT drawEllipses(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , Algorithm algo ,C
             break;
 
         case ID_ELLIPSE_POLAR:
+        case ID_ELLIPSE_BRESENHAM_MIDPOINT:
+        case ID_ELLIPSE_ITERATIVE_POLAR:
         case ID_ELLIPSE_CARTESIAN:
         case ID_ELLIPSE_BRESENHAM:
             selectedAlgorithm = LOWORD(wp);
@@ -142,19 +219,19 @@ LRESULT drawEllipses(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , Algorithm algo ,C
         if (count == 1) {
             xc = LOWORD(lp);
             yc = HIWORD(lp);
-
+            p1=Point(xc , yc);
             cmd.points.emplace_back(xc , yc);
         }
         else if (count == 2) {
             x = LOWORD(lp);
             y = HIWORD(lp);
             cmd.points.emplace_back(x , y);
-            ChooseEllipsesAlgo(algo, color, hdc, cmd.points[0] , cmd.points[1]);
+            p22=Point(x , y);
+            ChooseEllipsesAlgo(algo, color, hdc, p1 , p22);
             drawHistory.emplace_back(cmd);
             count = 0;
         }
         ReleaseDC(hwnd, hdc);
-        break;
         break;
     case WM_CLOSE:
         DestroyWindow(hwnd); break;
@@ -166,9 +243,12 @@ LRESULT drawEllipses(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , Algorithm algo ,C
 }
 
 void ChooseEllipsesAlgo(const Algorithm &algo, COLORREF color, HDC hdc, Point p , Point p2) {
-    auto[xc,yc] = p;
-    auto[xe , ye] = p2;
-    int a = abs(xe - xc), b = abs(ye - yc);
+    int xc = p.x;
+    int yc = p.y;
+
+    // Second click is a point on the ellipse border
+    int a = abs(p2.x - xc);
+    int b = abs(p2.y - yc);
     SetPixel(hdc, xc, yc, color);
     switch (algo) {
     case ALGO_ELLIPSE_POLAR :
@@ -177,8 +257,14 @@ void ChooseEllipsesAlgo(const Algorithm &algo, COLORREF color, HDC hdc, Point p 
     case ALGO_ELLIPSE_DIRECT:
         Drawellipsecartesian(hdc, xc, yc, a, b, color);
         break;
-    case ALGO_ELLIPSE_MIDPOINT:
+    case ALGO_ELLIPSE_BRESENHAM:
         Drawellipsebresenham(hdc, xc, yc, a, b, color);
+        break;
+    case ALGO_ELLIPSE_ITERATIVE:
+        DrawellipseIterativePolar(hdc, xc, yc, a, b, color);
+        break;
+    case ALGO_ELLIPSE_MIDPOINT:
+        DrawellipseModifiedMidpoint(hdc, xc, yc, a, b, color);
         break;
     }
 }
