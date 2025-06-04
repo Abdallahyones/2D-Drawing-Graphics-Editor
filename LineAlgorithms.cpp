@@ -33,7 +33,7 @@ void DrawLineDDA(HDC hdc, int startX, int startY, int endX, int endY, COLORREF c
         while (currentX != endX) {
             currentX += xIncrement;
             currentY += yIncrement;
-            SetPixel(hdc, currentX, Round(currentY), RGB(0,0,0));
+            SetPixel(hdc, currentX, Round(currentY), color);
         }
     } else {
         // Y-dominant case (not used for horizontal scanlines)
@@ -44,7 +44,7 @@ void DrawLineDDA(HDC hdc, int startX, int startY, int endX, int endY, COLORREF c
         while (currentY != endY) {
             currentY += yIncrement;
             currentX += xIncrement;
-            SetPixel(hdc, Round(currentX), currentY, RGB(0,0,0));
+            SetPixel(hdc, Round(currentX), currentY, color);
         }
     }
 }
@@ -183,8 +183,6 @@ void ChooseLineAlgo(const Algorithm &currentAlgorithm, Point points[], COLORREF 
             break;
     }
     DrawPoint(hdc, points[1].x, points[1].y, color);
-
-
 }
 
 
