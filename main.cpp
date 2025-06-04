@@ -490,7 +490,7 @@ void DrawAlgo(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     } else if (currentShape == SHAPE_ELLIPSE) {
         drawEllipses(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor, cmd);
     } else if (currentShape == SHAPE_Convex) {
-        drawConvex(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor, cmd);
+        drawConvex(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor,currentFillColor, cmd);
     } else if (currentShape == SHAPE_Recursive_AND_NOT) {
         drawRecursive(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor,currentFillColor,cmd);
     } else if (currentShape == SHAPE_FILLING || currentShape == Spline_Curve) {
