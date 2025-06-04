@@ -66,7 +66,6 @@ LRESULT WINAPI drawRecursive(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ,Algorith
         cmd.fillColor = fillcolor;
         cmd.shapeColor=boundaryColor;
         cmd.radius= 150;
-        COLORREF boundaryColor =color; 
         // Draw the circle centered at (x, y) with radius 150
         DrawRec(algo, hdc, cmd.points.back(), boundaryColor,fillcolor);
         drawHistory.emplace_back(cmd);
