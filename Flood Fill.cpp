@@ -3,7 +3,7 @@
 #include "Common.h"
 using namespace std;
 
-void DrawRec(const Algorithm &algo, HDC hdc, Point p ,COLORREF boundaryColor,COLORREF fillColor);
+void DrawRec(const Algorithm &algo, HDC hdc, Point p ,COLORREF boundaryColor,COLORREF fillColor/**/);
 
 // --- Bresenham Circle Drawing ---
 void CircleBresenhamM(HDC hdc, int xc, int yc, int radius, COLORREF c) {
@@ -39,6 +39,7 @@ void FloodFillOneOctantRecursive(HDC hdc, int xc, int yc, int x, int y, COLORREF
 }
 
 
+
 // --- Non-Recursive Flood Fill ---
 void FloodFillNonRecursive(HDC hdc, int x, int y, COLORREF boundaryColor, COLORREF fillColor) {
     queue<Point> Q;
@@ -56,33 +57,36 @@ void FloodFillNonRecursive(HDC hdc, int x, int y, COLORREF boundaryColor, COLORR
     }
 }
 
+
 // --- Window Procedure ---
-LRESULT WINAPI drawRecursive(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ,Algorithm algo, COLORREF boundaryColor , COLORREF fillcolor , DrawCommand& cmd) {
+LRESULT WINAPI drawRecursive(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ,Algorithm algo, COLORREF boundaryColor , COLORREF fillcolor,DrawCommand& cmd) {
     switch (msg) {
-    case WM_LBUTTONDOWN: {
-        HDC hdc = GetDC(hwnd);
-        int x = LOWORD(lp);
-        int y = HIWORD(lp);
-        cmd.fillColor = fillcolor;
-        cmd.shapeColor=boundaryColor;
-        cmd.radius= 150;
-        // Draw the circle centered at (x, y) with radius 150
-        DrawRec(algo, hdc, cmd.points.back(), boundaryColor,fillcolor);
-        drawHistory.emplace_back(cmd);
-        ReleaseDC(hwnd, hdc);
-        break;
-    }
-    case WM_RBUTTONDOWN: {
-              break;
-    }
-    case WM_CLOSE:
-        DestroyWindow(hwnd);
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hwnd, msg, wp, lp);
+        case WM_LBUTTONDOWN: {
+            HDC hdc = GetDC(hwnd);
+            int x = LOWORD(lp);
+            int y = HIWORD(lp);
+            cmd.points.emplace_back(x,y);
+            cmd.fillColor = fillcolor;
+            cmd.shapeColor=boundaryColor;
+            cmd.radius= 150;
+            // Draw the circle centered at (x, y) with radius 150
+            DrawRec(algo, hdc, cmd.points.back(), boundaryColor,fillcolor);
+            drawHistory.emplace_back(cmd);
+            ReleaseDC(hwnd, hdc);
+            break;
+        }
+        case WM_RBUTTONDOWN: {
+
+            break;
+        }
+        case WM_CLOSE:
+            DestroyWindow(hwnd);
+            break;
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            break;
+        default:
+            return DefWindowProc(hwnd, msg, wp, lp);
     }
     return 0;
 }
@@ -97,4 +101,3 @@ void DrawRec(const Algorithm &algo, HDC hdc, Point p ,COLORREF boundaryColor,COL
         FloodFillNonRecursive(hdc, x, y, boundaryColor, FillColor);
     }
 }
-
