@@ -90,7 +90,7 @@ LRESULT WINAPI drawRecursive(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ,Algorith
 
 void DrawRec(const Algorithm &algo, HDC hdc, Point p ,COLORREF boundaryColor,COLORREF FillColor/**/) {
     auto[x,y] = p;
-    CircleBresenhamM(hdc, x, y, 150, RGB(0, 0, 0));
+    CircleBresenhamM(hdc, x, y, 150, boundaryColor);
     if (algo == ALGO_Recursive) {
         FloodFillOneOctantRecursive(hdc, x, y, 0, 0, boundaryColor, FillColor);
     }
