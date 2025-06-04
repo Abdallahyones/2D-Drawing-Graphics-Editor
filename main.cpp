@@ -534,7 +534,7 @@ void DrawAlgoFromFile(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, DrawCom
             ChoosedrawFilling(hwnd, msg, wParam, lParam, cmd);
             break;
         case SHAPE_Convex:
-            ChooseAndFillPolygon(hdc , cmd.points , cmd.shapeColor , cmd.algorithm);
+            ChooseAndFillPolygon(hdc, cmd.points, cmd.shapeColor, cmd.fillColor, cmd.algorithm);
 
     }
     switch (cmd.algorithm) {
