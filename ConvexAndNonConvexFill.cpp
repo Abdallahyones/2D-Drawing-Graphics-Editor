@@ -221,43 +221,58 @@ drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, CO
             hdc = GetDC(hwnd);
             x = LOWORD(lParam);
             y = HIWORD(lParam);
-
             // Add vertex
             vertices.emplace_back(x, y);
             // Draw vertex Point
             SetPixel(hdc, x, y, color);
+
             // Draw line to previous vertex if exists using DDA
             if (vertices.size() > 1) {
                 Point prev = vertices[vertices.size() - 2];
                 Point curr = vertices[vertices.size() - 1];
                 cmd.points = vertices;
-                cmd.fillColor = color;
+                cmd.shapeColor = color;
+                cmd.fillColor = fillColor;
                 DrawLineDDa(hdc, prev.x, prev.y, curr.x, curr.y, color);
-                if(drawHistory.empty()||drawHistory.back().shape !=ALGO_FILL_CONVEX)
-                {
-                    drawHistory.emplace_back(cmd);
-                }else
-                {
+
+                // Update or add to drawHistory
+                if (drawHistory.empty() || drawHistory.back().shape != SHAPE_Convex) {
+                    drawHistory.push_back(cmd);
+                } else {
                     drawHistory.back().points = vertices;
                 }
             }
-            ReleaseDC(hwnd, hdc);
-            break;
-        case WM_RBUTTONDOWN:
+
+            // Check if the shape is closed (new vertex is near the first vertex)
             if (vertices.size() >= 3) {
-                hdc = GetDC(hwnd);
-                // Draw the closing edge using DDA
                 Point first = vertices[0];
-                Point last = vertices[vertices.size() - 1];
-                DrawLineDDa(hdc, last.x, last.y, first.x, first.y, color);
-                if (algo == ALGO_FILL_CONVEX) {
-                    ConvexFill(hdc, vertices.data(), vertices.size(),color);
-                } else {
-                    GeneralPolygonFill(hdc, vertices.data(), vertices.size(), color);
+                Point curr = vertices[vertices.size() - 1];
+                int dx = curr.x - first.x;
+                int dy = curr.y - first.y;
+                // Calculate distance to first vertex
+                if (sqrt(dx * dx + dy * dy) < CLOSE_THRESHOLD) {
+                    // Draw the closing edge
+                    Point last = vertices[vertices.size() - 1];
+                    DrawLineDDa(hdc, last.x, last.y, first.x, first.y, color);
+
+                    // Set up the command for filling
+                    cmd.points = vertices;
+                    cmd.shapeColor = color;
+                    cmd.fillColor = fillColor;
+                    cmd.shape = SHAPE_Convex;
+                    cmd.algorithm = algo;
+
+                    // Perform the filling
+                    if (algo == ALGO_FILL_CONVEX) {
+                        ConvexFill(hdc, vertices.data(), vertices.size(), fillColor);
+                    } else {
+                        GeneralPolygonFill(hdc, vertices.data(), vertices.size(), fillColor);
+                    }
+                    drawHistory.push_back(cmd);
+                    vertices.clear(); // Clear vertices after filling
                 }
-                ReleaseDC(hwnd, hdc);
-                vertices.clear(); // Clear vertices after filling
             }
+            ReleaseDC(hwnd, hdc);
             break;
 
         case WM_KEYDOWN:
