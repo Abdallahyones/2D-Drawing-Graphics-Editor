@@ -6,7 +6,7 @@
 
 using namespace std;
 
-#define MAX_SCANLINES 600
+#define MAX_SCANLINES 1000
 
 /*
     Defines the maximum number of scanlines (y-coordinates) the program can handle for polygon filling.
