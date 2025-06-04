@@ -163,8 +163,10 @@ void AddMenus(HWND hwnd) {
     HMENU ellipseMenu = CreateMenu();
     AppendMenu(ellipseMenu, MF_STRING, 105, "Direct");
     AppendMenu(ellipseMenu, MF_STRING, 106, "Polar");
-    AppendMenu(ellipseMenu, MF_STRING, 107, "Midpoint");
-
+    AppendMenu(ellipseMenu, MF_STRING, 107, "Bresenham");
+    AppendMenu(ellipseMenu, MF_STRING, 108, "Midpoint");
+    AppendMenu(ellipseMenu, MF_STRING, 109, "Iterative");
+    
     // Fill Submenu
     HMENU fillMenu = CreateMenu();
     AppendMenu(fillMenu, MF_STRING, 13, "Fill Circle with Lines");
@@ -394,7 +396,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     drawingMode = true;
                     break;
                 case 107:
+                    currentAlgorithm = ALGO_ELLIPSE_BRESENHAM;
+                    currentShape = SHAPE_ELLIPSE;
+                    drawingMode = true;
+                    break;
+                case 108:
                     currentAlgorithm = ALGO_ELLIPSE_MIDPOINT;
+                    currentShape = SHAPE_ELLIPSE;
+                    drawingMode = true;
+                    break;
+                case 109:
+                    currentAlgorithm = ALGO_ELLIPSE_ITERATIVE;
                     currentShape = SHAPE_ELLIPSE;
                     drawingMode = true;
                     break;
