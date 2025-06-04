@@ -35,7 +35,9 @@ enum Algorithm {
     // Ellipse Drawing Algorithms
     ALGO_ELLIPSE_DIRECT,
     ALGO_ELLIPSE_POLAR,
+    ALGO_ELLIPSE_BRESENHAM,
     ALGO_ELLIPSE_MIDPOINT,
+    ALGO_ELLIPSE_ITERATIVE,
 
     // Recursive 
     ALGO_Recursive,
