@@ -1,9 +1,7 @@
-#include <windows.h>
 #include <list>
 #include <vector>
 #include <cmath>
 #include <algorithm>
-#include <sstream>
 #include "Common.h"
 
 using namespace std;
@@ -211,10 +209,11 @@ void GeneralPolygonFill(HDC hdc, Point *polygonVertices, int vertexCount, COLORR
 }
 // -------------------------------------------- Window Procedure --------------------------------------------------
 LRESULT CALLBACK
-drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, COLORREF color, DrawCommand &cmd) {
+drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, COLORREF color, COLORREF fillColor, DrawCommand &cmd) {
     static vector<Point> vertices;
     HDC hdc;
     int x, y;
+    const int CLOSE_THRESHOLD = 10;
 
     switch (msg) {
         case WM_LBUTTONDOWN:
@@ -276,8 +275,8 @@ drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, CO
             break;
 
         case WM_KEYDOWN:
-
             break;
+
         case WM_PAINT: {
             PAINTSTRUCT ps;
             hdc = BeginPaint(hwnd, &ps);
@@ -299,15 +298,11 @@ drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, CO
     return 0;
 }
 
-void ChooseAndFillPolygon(const HDC& hdc,  vector<Point>& vertices, COLORREF color, Algorithm algo) {
-
-
-
+void ChooseAndFillPolygon(const HDC& hdc,  vector<Point>& vertices, COLORREF color,COLORREF fillColor,Algorithm algo) {
     DrawLineDDa(hdc, vertices[0].x, vertices[0].y, vertices.back().x, vertices.back().y, color);
     if (algo == ALGO_FILL_CONVEX) {
-        ConvexFill(hdc, vertices.data(), vertices.size(), color);
+        ConvexFill(hdc, vertices.data(), vertices.size(), fillColor);
     } else {
-        GeneralPolygonFill(hdc, vertices.data(), vertices.size(), color);
+        GeneralPolygonFill(hdc, vertices.data(), vertices.size(), fillColor);
     }
-
 }
