@@ -140,9 +140,10 @@ void AddMenus(HWND hwnd) {
     AppendMenu(fileMenu, MF_STRING, 3, "Clear");
 
     // Draw Menu
-    AppendMenu(drawMenu, MF_STRING, 4, "Draw DDA Line");
-    AppendMenu(drawMenu, MF_STRING, 5, "Draw Midpoint Line");
-    AppendMenu(drawMenu, MF_STRING, 6, "Draw BRESENHAM Line");
+    AppendMenu(drawMenu, MF_STRING, 4, "DDA");
+    AppendMenu(drawMenu, MF_STRING, 5, "Bresenham");
+    AppendMenu(drawMenu, MF_STRING, 6, "Parametric");
+    
 
     // Color Menu
     AppendMenu(colorMenu, MF_STRING, 7, "Change Background Color");
