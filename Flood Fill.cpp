@@ -1,14 +1,9 @@
 #include <windows.h>
 #include <queue>
 #include "Common.h"
-
-void DrawRec(const Algorithm &algo, HDC hdc, Point p ,COLORREF boundaryColor);
-
 using namespace std;
 
-
-
-
+void DrawRec(const Algorithm &algo, HDC hdc, Point p ,COLORREF boundaryColor,COLORREF fillColor);
 
 // --- Bresenham Circle Drawing ---
 void CircleBresenhamM(HDC hdc, int xc, int yc, int radius, COLORREF c) {
@@ -44,7 +39,6 @@ void FloodFillOneOctantRecursive(HDC hdc, int xc, int yc, int x, int y, COLORREF
 }
 
 
-
 // --- Non-Recursive Flood Fill ---
 void FloodFillNonRecursive(HDC hdc, int x, int y, COLORREF boundaryColor, COLORREF fillColor) {
     queue<Point> Q;
@@ -62,21 +56,17 @@ void FloodFillNonRecursive(HDC hdc, int x, int y, COLORREF boundaryColor, COLORR
     }
 }
 
-
-// --- Global state for toggle ---
-
-
 // --- Window Procedure ---
-LRESULT WINAPI drawRecursive(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ,Algorithm algo, COLORREF color , DrawCommand& cmd) {
+LRESULT WINAPI drawRecursive(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ,Algorithm algo, COLORREF boundaryColor , COLORREF fillcolor , DrawCommand& cmd) {
     switch (msg) {
     case WM_LBUTTONDOWN: {
         HDC hdc = GetDC(hwnd);
         int x = LOWORD(lp);
         int y = HIWORD(lp);
-        cmd.points.emplace_back(x,y);
-        cmd.fillColor = RGB(0, 0, 0);
+        cmd.fillColor = fillcolor;
+        cmd.shapeColor=boundaryColor;
         cmd.radius= 150;
-        COLORREF boundaryColor =color; // black boundary
+        COLORREF boundaryColor =color; 
         // Draw the circle centered at (x, y) with radius 150
         DrawRec(algo, hdc, cmd.points.back(), boundaryColor);
         drawHistory.emplace_back(cmd);
@@ -84,7 +74,6 @@ LRESULT WINAPI drawRecursive(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ,Algorith
         break;
     }
     case WM_RBUTTONDOWN: {
-
               break;
     }
     case WM_CLOSE:
@@ -99,14 +88,14 @@ LRESULT WINAPI drawRecursive(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ,Algorith
     return 0;
 }
 
-void DrawRec(const Algorithm &algo, HDC hdc, Point p ,COLORREF boundaryColor) {
+void DrawRec(const Algorithm &algo, HDC hdc, Point p ,COLORREF boundaryColor,COLORREF FillColor/**/) {
     auto[x,y] = p;
     CircleBresenhamM(hdc, x, y, 150, RGB(0, 0, 0));
     if (algo == ALGO_Recursive) {
-        FloodFillOneOctantRecursive(hdc, x, y, 0, 0, boundaryColor, RGB(0,255,0));
+        FloodFillOneOctantRecursive(hdc, x, y, 0, 0, boundaryColor, FillColor);
     }
     else {
-        FloodFillNonRecursive(hdc, x, y, boundaryColor, RGB(0,255,0));
+        FloodFillNonRecursive(hdc, x, y, boundaryColor, FillColor);
     }
 }
 
