@@ -130,17 +130,15 @@ LRESULT drawLineRectangle(HWND hwnd, UINT m, WPARAM wp, LPARAM lp, COLORREF colo
 
     switch (m) {
         case WM_PAINT:
-            hdc = BeginPaint(hwnd, &ps);
-            Rectangle(hdc, xLeft, yBottom, xRight, yTop);// Draw clipping window
-            EndPaint(hwnd, &ps);
+
             break;
 
         case WM_LBUTTONDOWN: {
             hdc = GetDC(hwnd);
             int x = LOWORD(lp);
             int y = HIWORD(lp);
+            Rectangle(hdc, xLeft, yTop, xRight, yBottom);
             cmd.points.emplace_back(x, y);
-
             if (isFirstClick) {
                 x1 = x;
                 y1 = y;

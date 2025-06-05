@@ -77,7 +77,6 @@ struct Point {
     }
 };
 
-
 const int xLeft = 300, xRight = 500, yTop = 400, yBottom = 300;
 const int INSIDE = 0; //0000
 const int LEFT = 1; //0001

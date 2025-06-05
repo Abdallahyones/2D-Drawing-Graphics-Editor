@@ -505,7 +505,7 @@ void DrawAlgo(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         } else if (currentAlgorithm == ALGO_CLIP_RECTANGLE_LINE) {
             drawLineRectangle(hwnd, msg, wParam, lParam, currentShapeColor, cmd);
         } else if (currentAlgorithm == ALGO_CLIP_RECTANGLE_POLYGON) {
-            //drawRectanglePolygon(hwnd, msg, wParam, lParam, currentShapeColor, cmd);
+            drawRectanglePolygon(hwnd, msg, wParam, lParam, currentShapeColor, cmd);
         } else if (currentAlgorithm == ALGO_CLIP_SQUARE_POINT) {
             drawPointSquare(hwnd, msg, wParam, lParam, currentShapeColor, cmd);
         } else if (currentAlgorithm == ALGO_CLIP_SQUARE_LINE) {
@@ -544,7 +544,7 @@ void DrawAlgoFromFile(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, DrawCom
     switch (cmd.algorithm) {
         // Clipping
         case ALGO_CLIP_RECTANGLE_LINE:
-            //   ClippingPoint(  cmd.shapeColor ,hdc ,cmd.points.back());
+         //     ClippingPoint(  cmd.shapeColor ,hdc ,cmd.points.back());
             break;
         case ALGO_CLIP_RECTANGLE_POINT:
             CohenSutherlandLineRectangle(hdc, cmd.points[0], cmd.points[1], cmd.shapeColor);
