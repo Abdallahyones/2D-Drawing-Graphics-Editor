@@ -98,6 +98,7 @@ void loadFromFile(const string &filename, HWND hwnd, UINT msg, WPARAM wParam, LP
 void ClearScreen(HWND hwnd) {
     HDC hdc = GetDC(hwnd);
     drawHistory.clear();
+    vertices.clear();
     RECT rect;
     GetClientRect(hwnd, &rect);
     FillRect(hdc, &rect, backgroundBrush);
@@ -329,6 +330,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     break;
 
                 case 17:
+                    vertices.clear();
                     currentAlgorithm = ALGO_FILL_CONVEX;
                     currentShape = SHAPE_Convex;
                     drawingMode = true;
@@ -356,6 +358,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     drawingMode = true;
                     break;
                 case 25 :
+                    vertices.clear();
                     currentAlgorithm = ALGO_FILL_NONCONVEX;
                     currentShape = SHAPE_Convex;
                     drawingMode = true;
@@ -494,6 +497,7 @@ void DrawAlgo(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     } else if (currentShape == SHAPE_Recursive_AND_NOT) {
         drawRecursive(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor,currentFillColor,cmd);
     } else if (currentShape == SHAPE_FILLING || currentShape == Spline_Curve) {
+        cmd.fillColor = currentFillColor;
         FillingAlgo(hwnd, msg, wParam, lParam, currentAlgorithm, cmd);
     } else if (currentShape == SHAPE_CLIPING) {
         if (currentAlgorithm == ALGO_CLIP_RECTANGLE_POINT) {
@@ -540,7 +544,7 @@ void DrawAlgoFromFile(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, DrawCom
     switch (cmd.algorithm) {
         // Clipping
         case ALGO_CLIP_RECTANGLE_LINE:
-         //   ClippingPoint(  cmd.shapeColor ,hdc ,cmd.points.back());
+            //   ClippingPoint(  cmd.shapeColor ,hdc ,cmd.points.back());
             break;
         case ALGO_CLIP_RECTANGLE_POINT:
             CohenSutherlandLineRectangle(hdc, cmd.points[0], cmd.points[1], cmd.shapeColor);

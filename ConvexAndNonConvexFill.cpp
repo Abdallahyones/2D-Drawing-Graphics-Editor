@@ -210,7 +210,7 @@ void GeneralPolygonFill(HDC hdc, Point *polygonVertices, int vertexCount, COLORR
 // -------------------------------------------- Window Procedure --------------------------------------------------
 LRESULT CALLBACK
 drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, COLORREF color, COLORREF fillColor, DrawCommand &cmd) {
-    static vector<Point> vertices;
+
     HDC hdc;
     int x, y;
     const int CLOSE_THRESHOLD = 10;
@@ -268,7 +268,7 @@ drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, CO
                         GeneralPolygonFill(hdc, vertices.data(), vertices.size(), fillColor);
                     }
                     drawHistory.push_back(cmd);
-                    vertices.clear(); // Clear vertices after filling
+                  //  vertices.clear();
                 }
             }
             ReleaseDC(hwnd, hdc);

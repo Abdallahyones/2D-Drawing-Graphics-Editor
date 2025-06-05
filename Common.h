@@ -105,6 +105,7 @@ struct DrawCommand {
 
 
 extern vector<DrawCommand> drawHistory;
+static vector<Point> vertices;
 // Function declarations
 int Round(double x);
 
