@@ -73,7 +73,12 @@ Vector4 GetHermiteCoeff(double x0, double s0, double x1, double s1) {
 
 // Hermite curve drawing function
 void DrawHermiteCurve(HDC hdc, Point &P0, Point &T0, Point &P1, Point &T1, int numpoints,
-                      COLORREF color = RGB(0, 0, 0)) {
+                      COLORREF color) {
+
+    // draw by color
+    HPEN pen = CreatePen(PS_SOLID, 1, color); // Create pen with given color
+    HPEN oldPen = (HPEN)SelectObject(hdc, pen); // Select pen into DC and save old one
+
     Vector4 xcoeff = GetHermiteCoeff(P0.x, T0.x, P1.x, T1.x);
     Vector4 ycoeff = GetHermiteCoeff(P0.y, T0.y, P1.y, T1.y);
     if (numpoints < 2) return;
@@ -90,11 +95,14 @@ void DrawHermiteCurve(HDC hdc, Point &P0, Point &T0, Point &P1, Point &T1, int n
         else
             LineTo(hdc, x, y);
     }
+    // restore old color
+    SelectObject(hdc, oldPen); // Restore old pen
+    DeleteObject(pen);         // Delete created pen
 }
 
 // Bézier curve as a special Hermite curve
 void DrawBezierCurve(HDC hdc, Point &P0, Point &P1, Point &P2, Point &P3, int numpoints,
-                     COLORREF color = RGB(0, 0, 0)) {
+                     COLORREF color) {
     Point T0(3 * (P1.x - P0.x), 3 * (P1.y - P0.y));
     Point T1(3 * (P3.x - P2.x), 3 * (P3.y - P2.y));
     DrawHermiteCurve(hdc, P0, T0, P3, T1, numpoints, color);
@@ -102,12 +110,21 @@ void DrawBezierCurve(HDC hdc, Point &P0, Point &P1, Point &P2, Point &P3, int nu
 
 // Cardinal spline using Hermite curve segments
 // Cardinal spline using Hermite curve segments
-void DrawCardinalSpline(HDC hdc, Point P[], int n, double c, int numpoints, COLORREF color = RGB(0, 0, 0)) {
+void DrawCardinalSpline(HDC hdc, Point P[], int n, double c, int numpoints, COLORREF color) {
     if (n < 2) return; // Need at least 2 points to draw anything
+
+    // draw by color
+    HPEN pen = CreatePen(PS_SOLID, 1, color);
+    HPEN oldPen = (HPEN)SelectObject(hdc, pen);
+
     if (n == 2) {
         // Just draw a line
         MoveToEx(hdc, (int) P[0].x, (int) P[0].y, NULL);
         LineTo(hdc, (int) P[1].x, (int) P[1].y);
+
+        // restore old color
+        SelectObject(hdc, oldPen);
+        DeleteObject(pen);
         return;
     }
 
@@ -130,6 +147,10 @@ void DrawCardinalSpline(HDC hdc, Point P[], int n, double c, int numpoints, COLO
         }
 
         DrawHermiteCurve(hdc, P1, T0, P2, T1, numpoints, color);
+
+        // restore old color
+        SelectObject(hdc, oldPen);
+        DeleteObject(pen);
     }
 
     // Optional: draw small dots for control points
@@ -157,61 +178,7 @@ void CircleBresham(HDC hdc, int xc, int yc, int radius, COLORREF c) {
 }
 
 
-void fill(HDC hdc, int x, int y, int xc, int yc, int r, COLORREF c) {
-    const int N = r + 1;
-    vector<vector<bool>> vis(N, vector<bool>(N));
-    queue<pair<int, int>> ls;
-    ls.push({0, 0});
-    vis[r][r] = true;
-    int dx[] = {1, 0, -1, 0};
-    int dy[] = {0, 1, 0, -1};
-
-    while (!ls.empty()) {
-        x = ls.front().first;
-        y = ls.front().second;
-        ls.pop();
-
-        if (y > x || x * x + y * y > r * r) continue;
-
-        SetPixel(hdc, xc + x, yc + y, c);
-        SetPixel(hdc, xc - x, yc - y, c);
-
-        for (int i = 0; i < 4; ++i) {
-            int nx = x + dx[i];
-            int ny = y + dy[i];
-
-            if (nx < 0 || ny < 0 || nx >= N || ny >= N || nx < ny) continue;
-            if (!vis[nx][ny]) {
-                vis[nx][ny] = true;
-                ls.push({nx, ny});
-            }
-        }
-    }
-}
-
-void FillQuarterCircle(HDC hdc, int xc, int yc, int r, int quarter, COLORREF c) {
-    for (int y = 0; y <= r; ++y) {
-        int xLimit = (int) sqrt(r * r - y * y);
-        for (int x = 0; x <= xLimit; ++x) {
-            switch (quarter) {
-                case 1:
-                    SetPixel(hdc, xc + x, yc - y, c);
-                    break;
-                case 2:
-                    SetPixel(hdc, xc - x, yc - y, c);
-                    break;
-                case 3:
-                    SetPixel(hdc, xc - x, yc + y, c);
-                    break;
-                case 4:
-                    SetPixel(hdc, xc + x, yc + y, c);
-                    break;
-            }
-        }
-    }
-}
-
-void FillQuarterCircle_line(HDC hdc, int xc, int yc, int r, int quarter, COLORREF c1 = RGB(0, 0, 0),COLORREF c2 = RGB(255, 255, 255)) {
+void FillQuarterCircle_line(HDC hdc, int xc, int yc, int r, int quarter, COLORREF c1 ,COLORREF c2) {
     for (int y = 0; y <= r; ++y) {
         int xLimit = (int) round(sqrt(r * r - y * y));
         COLORREF currentColor = (y % 2 == 0) ? c1 : c2;
@@ -341,7 +308,7 @@ void DrawLineMidpoint(HDC hdc, int x1, int y1, int x2, int y2, COLORREF c) {
 }
 
 
-void FillRectangleWithBezier(HDC hdc, Point topLeft, int width, int height, COLORREF color = RGB(0, 0, 0)) {
+void FillRectangleWithBezier(HDC hdc, Point topLeft, int width, int height, COLORREF color) {
     int numCurves = height / 5; // Curve density
 
     for (int i = 0; i <= numCurves; ++i) {
@@ -359,7 +326,7 @@ void FillRectangleWithBezier(HDC hdc, Point topLeft, int width, int height, COLO
 }
 
 
-void FillSquareWithHermite(HDC hdc, Point topLeft, int sideLength, COLORREF color = RGB(0, 0, 0)) {
+void FillSquareWithHermite(HDC hdc, Point topLeft, int sideLength, COLORREF color) {
     Point P0, P1, T0, T1;
     int numCurves = sideLength / 5; // Density of curves
 
@@ -382,7 +349,7 @@ void FillSquareWithHermite(HDC hdc, Point topLeft, int sideLength, COLORREF colo
 }
 
 
-void DrawRectangle(HDC hdc, int x1, int y1, int x2, int y2) {
+void DrawRectangle(HDC hdc, int x1, int y1, int x2, int y2 , COLORREF color_shape , COLORREF color_filling) {
     // Determine the actual corners of the rectangle
     int left = min(x1, x2);
     int right = max(x1, x2);
@@ -390,25 +357,25 @@ void DrawRectangle(HDC hdc, int x1, int y1, int x2, int y2) {
     int bottom = max(y1, y2);
 
     // Draw top edge (DDA) - Red
-    DrawLineDDAFilll(hdc, left, top, right, top, RGB(255, 0, 0));
+    DrawLineDDAFilll(hdc, left, top, right, top, color_shape);
 
     // Draw bottom edge (DDA) - Green
-    DrawLineDDAFilll(hdc, left, bottom, right, bottom, RGB(0, 255, 0));
+    DrawLineDDAFilll(hdc, left, bottom, right, bottom, color_shape);
 
     // Draw left edge (Midpoint) - Blue
-    DrawLineMidpoint(hdc, left, top, left, bottom, RGB(0, 0, 255));
+    DrawLineMidpoint(hdc, left, top, left, bottom, color_shape);
 
     // Draw right edge (Midpoint) - Cyan
-    DrawLineMidpoint(hdc, right, top, right, bottom, RGB(0, 255, 255));
+    DrawLineMidpoint(hdc, right, top, right, bottom, color_shape);
 
     int height = bottom - top;
     int width = right - left;
     Point topLeft(left, top);
-    FillRectangleWithBezier(hdc, topLeft, width, height, RGB(0, 0, 0));
+    FillRectangleWithBezier(hdc, topLeft, width, height, color_filling);
 
 }
 
-void DrawSquare(HDC hdc, int x1, int y1, int x2, int y2) {
+void DrawSquare(HDC hdc, int x1, int y1, int x2, int y2 , COLORREF color_shape , COLORREF color_filling) {
     // Calculate the difference in x and y
     int dx = abs(x2 - x1);
     int dy = abs(y2 - y1);
@@ -429,19 +396,19 @@ void DrawSquare(HDC hdc, int x1, int y1, int x2, int y2) {
     int bottom = max(y1, y2);
 
     // Draw top edge (DDA) - Red
-    DrawLineDDAFilll(hdc, left, top, right, top, RGB(255, 0, 0));
+    DrawLineDDAFilll(hdc, left, top, right, top, color_shape);
 
     // Draw bottom edge (DDA) - Green
-    DrawLineDDAFilll(hdc, left, bottom, right, bottom, RGB(0, 255, 0));
+    DrawLineDDAFilll(hdc, left, bottom, right, bottom, color_shape);
 
     // Draw left edge (Midpoint) - Blue
-    DrawLineMidpoint(hdc, left, top, left, bottom, RGB(0, 0, 255));
+    DrawLineMidpoint(hdc, left, top, left, bottom, color_shape);
 
     // Draw right edge (Midpoint) - Cyan
-    DrawLineMidpoint(hdc, right, top, right, bottom, RGB(0, 255, 255));
+    DrawLineMidpoint(hdc, right, top, right, bottom, color_shape);
 
     Point topLeft(left, top);
-    FillSquareWithHermite(hdc, topLeft, side, RGB(0, 0, 0));
+    FillSquareWithHermite(hdc, topLeft, side, color_filling);
 }
 
 LRESULT CALLBACK FillingAlgo(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, Algorithm algo, DrawCommand &cmd) {
@@ -475,9 +442,9 @@ LRESULT CALLBACK FillingAlgo(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                     cmd.points.emplace_back(xEnd, yEnd);
                     cmd.quarter =selectedQuarter;
                     if (algo == ALGO_FILL_RECTANGLE_BEZIER_HORIZONTAL) {
-                        DrawRectangle(hdc, xStart, yStart, xEnd, yEnd);
+                        DrawRectangle(hdc, xStart, yStart, xEnd, yEnd , cmd.shapeColor , cmd.fillColor);
                     } else {
-                        DrawSquare(hdc, xStart, yStart, xEnd, yEnd);
+                        DrawSquare(hdc, xStart, yStart, xEnd, yEnd , cmd.shapeColor , cmd.fillColor);
                     }
                     drawHistory.emplace_back(cmd);
 
@@ -494,7 +461,7 @@ LRESULT CALLBACK FillingAlgo(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                     y2 = y;
 
                     r1 = Round(sqrt(pow((x1 - x2), 2) + pow((y1 - y2), 2)));
-                    CircleBresham(hdc, x1, y1, r1, RGB(0, 0, 0));
+                    CircleBresham(hdc, x1, y1, r1, cmd.shapeColor);
                     waitingForQuarterClick = true;
                     clickCount++;
                 } else if (clickCount == 2 && waitingForQuarterClick) {
@@ -515,9 +482,9 @@ LRESULT CALLBACK FillingAlgo(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                     cmd.points.emplace_back(x1, y1);
                     cmd.points.emplace_back(x2, y2);
                     if (algo == ALGO_FILL_CIRCLE_LINES)
-                        FillQuarterCircle_line(hdc, x1, y1, r1, selectedQuarter, RGB(0, 0, 0));
+                        FillQuarterCircle_line(hdc, x1, y1, r1, selectedQuarter, cmd.fillColor , RGB(255 , 255 , 255));
                     else
-                        FillQuarterCircle_circle(hdc, x1, y1, r1, selectedQuarter, RGB(0, 0, 255));
+                        FillQuarterCircle_circle(hdc, x1, y1, r1, selectedQuarter, cmd.fillColor);
 
                     drawHistory.emplace_back(cmd);
                     clickCount = 0;
@@ -531,7 +498,7 @@ LRESULT CALLBACK FillingAlgo(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 if (controlPoints.size() >= 4) {
                     cmd.curveTension = tension;
                     DrawCardinalSpline(hdc, controlPoints.data(), controlPoints.size(), tension, numpoints,
-                                       RGB(0, 150, 255));
+                                       cmd.shapeColor);
                     drawHistory.emplace_back(cmd);
                     controlPoints.clear();
                 }
@@ -565,9 +532,9 @@ void ChoosedrawFilling(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, Dr
     if (cmd.algorithm == ALGO_FILL_RECTANGLE_BEZIER_HORIZONTAL || cmd.algorithm == ALGO_FILL_SQUARE_HERMIT_VERTICAL) {
 
         if (cmd.algorithm == ALGO_FILL_RECTANGLE_BEZIER_HORIZONTAL) {
-            DrawRectangle(hdc, cmd.points[0].x, cmd.points[0].y, cmd.points[1].x, cmd.points[1].y);
+            DrawRectangle(hdc, cmd.points[0].x, cmd.points[0].y, cmd.points[1].x, cmd.points[1].y , cmd.shapeColor , cmd.fillColor);
         } else {
-            DrawSquare(hdc, cmd.points[0].x, cmd.points[0].y, cmd.points[1].x, cmd.points[1].y);
+            DrawSquare(hdc, cmd.points[0].x, cmd.points[0].y, cmd.points[1].x, cmd.points[1].y , cmd.shapeColor , cmd.fillColor);
         }
     } else if (cmd.algorithm == ALGO_FILL_CIRCLE_LINES || cmd.algorithm == ALGO_FILL_CIRCLE_CIRCLES) {
 
@@ -575,15 +542,15 @@ void ChoosedrawFilling(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, Dr
         auto [x2, y2] = cmd.points[1];
 
         int r1 = Round(sqrt(pow((x1 - x2), 2) + pow((y1 - y2), 2)));
-        CircleBresham(hdc, x1, y1, r1, RGB(0, 0, 0));
+        CircleBresham(hdc, x1, y1, r1, cmd.shapeColor);
         if (cmd.algorithm == ALGO_FILL_CIRCLE_LINES)
-            FillQuarterCircle_line(hdc, x1, y1, r1, cmd.quarter, RGB(0, 0, 0));
+            FillQuarterCircle_line(hdc, x1, y1, r1, cmd.quarter, cmd.fillColor , RGB(255,255,255));
         else if (cmd.algorithm == ALGO_FILL_CIRCLE_CIRCLES)
-            FillQuarterCircle_circle(hdc, x1, y1, r1, cmd.quarter, RGB(0, 0, 255));
+            FillQuarterCircle_circle(hdc, x1, y1, r1, cmd.quarter, cmd.fillColor);
     } else {
 
         DrawCardinalSpline(hdc, cmd.controlPoints.data(), cmd.controlPoints.size(), cmd.curveTension, 100,
-                           RGB(0, 150, 255));
+                           cmd.shapeColor);
     }
     ReleaseDC(hwnd, hdc);
 

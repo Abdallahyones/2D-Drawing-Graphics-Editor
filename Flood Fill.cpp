@@ -48,12 +48,13 @@ void FloodFillNonRecursive(HDC hdc, int x, int y, COLORREF boundaryColor, COLORR
         Point v = Q.front();
         Q.pop();
         COLORREF current = GetPixel(hdc, v.x, v.y);
-        if (current == boundaryColor || current == fillColor) continue;
-        SetPixel(hdc, v.x, v.y, fillColor);
+        if (current == boundaryColor || current == fillColor || v.y > v.x) continue;
+//        SetPixel(hdc, v.x, v.y, fillColor);
+        Draw8Points(hdc, x, y, v.x-x, v.y-y, fillColor);
         Q.push(Point(v.x + 1, v.y));
-        Q.push(Point(v.x - 1, v.y));
+//        Q.push(Point(v.x - 1, v.y));
         Q.push(Point(v.x, v.y + 1));
-        Q.push(Point(v.x, v.y - 1));
+//        Q.push(Point(v.x, v.y - 1));
     }
 }
 
