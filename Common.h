@@ -78,12 +78,15 @@ struct Point {
 };
 
 const int xLeft = 300, xRight = 500, yTop = 400, yBottom = 300;
+const int squareSize = 200;
+const int Xright = xLeft + squareSize;
+const int Ybottom = yTop + squareSize;
+
 const int INSIDE = 0; //0000
 const int LEFT = 1; //0001
 const int RIGHT = 2; //0010
 const int BOTTOM = 4; //0100
 const int TOP = 8; //1000
-const int squareSize = 200;
 struct DrawCommand {
     Shape shape;
     Algorithm algorithm;
@@ -105,6 +108,8 @@ struct DrawCommand {
 
 extern vector<DrawCommand> drawHistory;
 static vector<Point> vertices;
+void drawRectangle(HWND hwnd);
+void drawRectangleSquare(HWND hwnd);
 // Function declarations
 int Round(double x);
 

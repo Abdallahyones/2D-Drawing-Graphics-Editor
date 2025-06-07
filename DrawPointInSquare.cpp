@@ -3,8 +3,7 @@
 #include "Common.h"
 using namespace std;
 
-const int Xright = xLeft + squareSize;
-const int Ybottom = yTop + squareSize;
+
 
 void DrawPointSquare(HDC hdc, int x, int y, COLORREF c) {
     if (x >= xLeft && x <= Xright && y >= yTop && y <= Ybottom) {
@@ -24,7 +23,6 @@ LRESULT drawPointSquare(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , COLORREF c  ,D
             hdc = GetDC(hwnd);
             int x = LOWORD(lp);
             int y = HIWORD(lp);
-            Rectangle(hdc, xLeft, yTop, XRight, YBottom);
             cmd.points.emplace_back(x,y);
             DrawPointSquare(hdc, x, y,c);
             drawHistory.emplace_back(cmd);

@@ -28,4 +28,13 @@ void Draw8Points(HDC hdc, int xc, int yc, int x, int y, COLORREF color) {
     SetPixel(hdc, xc - y, yc - x, color);
     SetPixel(hdc, xc + y, yc - x, color);
 }
-
+void drawRectangle(HWND hwnd){
+    HDC hdc= GetDC(hwnd);
+    Rectangle(hdc, xLeft, yTop, xRight, yBottom);
+    ReleaseDC(hwnd , hdc);
+}
+void drawRectangleSquare(HWND hwnd ){
+    HDC hdc= GetDC(hwnd);
+    Rectangle(hdc, xLeft, yTop, Xright, Ybottom);
+    ReleaseDC(hwnd , hdc);
+}

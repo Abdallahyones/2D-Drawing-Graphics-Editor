@@ -26,7 +26,7 @@ void DrawAlgoFromFile(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, DrawCom
 
 COLORREF currentBackgroundColor = RGB(255, 255, 255);
 COLORREF currentShapeColor = RGB(0, 0, 0);
-COLORREF currentFillColor = RGB(0, 255, 0); 
+COLORREF currentFillColor = RGB(0, 255, 0);
 Shape currentShape = SHAPE_LINE;
 Algorithm currentAlgorithm = ALGO_LINE_DDA;
 HBRUSH backgroundBrush = CreateSolidBrush(currentBackgroundColor);
@@ -118,6 +118,7 @@ COLORREF OpenColorDialog(HWND hwnd, COLORREF initialColor) {
     }
     return initialColor;
 }
+
 HMENU CreateCursorMenu() {
     HMENU cursorMenu = CreateMenu();
     AppendMenu(cursorMenu, MF_STRING, 300, "Arrow");
@@ -135,7 +136,7 @@ void AddMenus(HWND hwnd) {
     HMENU colorMenu = CreateMenu();
     HMENU algoMenu = CreateMenu();
     HMENU cursorMenu = CreateCursorMenu();
-    AppendMenu(fileMenu, MF_POPUP, (UINT_PTR)cursorMenu, "Cursor");
+    AppendMenu(fileMenu, MF_POPUP, (UINT_PTR) cursorMenu, "Cursor");
     // File Menu
     AppendMenu(fileMenu, MF_STRING, 1, "Save");
     AppendMenu(fileMenu, MF_STRING, 2, "Load");
@@ -145,7 +146,7 @@ void AddMenus(HWND hwnd) {
     AppendMenu(drawMenu, MF_STRING, 4, "DDA");
     AppendMenu(drawMenu, MF_STRING, 5, "Bresenham");
     AppendMenu(drawMenu, MF_STRING, 6, "Parametric");
-    
+
 
     // Color Menu
     AppendMenu(colorMenu, MF_STRING, 7, "Change Background Color");
@@ -167,7 +168,7 @@ void AddMenus(HWND hwnd) {
     AppendMenu(ellipseMenu, MF_STRING, 107, "Bresenham");
     AppendMenu(ellipseMenu, MF_STRING, 108, "Midpoint");
     AppendMenu(ellipseMenu, MF_STRING, 109, "Iterative");
-    
+
     // Fill Submenu
     HMENU fillMenu = CreateMenu();
     AppendMenu(fillMenu, MF_STRING, 13, "Fill Circle with Lines");
@@ -293,7 +294,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 case 9:
                     currentFillColor = OpenColorDialog(hwnd, currentFillColor);
                     break;
-                
+
                 case 10:
                     saveToFile("in.txt");
                     drawingMode = false;
@@ -414,26 +415,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     drawingMode = true;
                     break;
                 case 220:
+                    drawRectangle(hwnd);
                     currentShape = SHAPE_CLIPING;
                     currentAlgorithm = ALGO_CLIP_RECTANGLE_POINT;
                     drawingMode = true;
                     break;
                 case 221:
+                    drawRectangle(hwnd);
                     currentShape = SHAPE_CLIPING;
                     currentAlgorithm = ALGO_CLIP_RECTANGLE_LINE;
                     drawingMode = true;
                     break;
                 case 222:
+                    drawRectangle(hwnd);
                     currentShape = SHAPE_CLIPING;
                     currentAlgorithm = ALGO_CLIP_RECTANGLE_POLYGON;
                     drawingMode = true;
                     break;
                 case 230:
+                    drawRectangleSquare(hwnd);
                     currentShape = SHAPE_CLIPING;
                     currentAlgorithm = ALGO_CLIP_SQUARE_POINT;
                     drawingMode = true;
                     break;
                 case 231:
+                    drawRectangleSquare(hwnd);
                     currentShape = SHAPE_CLIPING;
                     currentAlgorithm = ALGO_CLIP_SQUARE_LINE;
                     drawingMode = true;
@@ -453,7 +459,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 case 304:
                     hCurrentCursor = LoadCursor(NULL, IDC_HELP);
                     break;
-                case 305: 
+                case 305:
                     ClearScreen(hwnd);
                     drawingMode = false;
                     break;
@@ -461,6 +467,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             break;
 
         case WM_LBUTTONDOWN:
+        case WM_RBUTTONDOWN:
             if (drawingMode) {
                 DrawAlgo(hwnd, msg, wParam, lParam);
             }
@@ -476,7 +483,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 return TRUE;
             }
             break;
-
         default:
             return DefWindowProc(hwnd, msg, wParam, lParam);
     }
@@ -493,9 +499,9 @@ void DrawAlgo(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     } else if (currentShape == SHAPE_ELLIPSE) {
         drawEllipses(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor, cmd);
     } else if (currentShape == SHAPE_Convex) {
-        drawConvex(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor,currentFillColor, cmd);
+        drawConvex(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor, currentFillColor, cmd);
     } else if (currentShape == SHAPE_Recursive_AND_NOT) {
-        drawRecursive(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor,currentFillColor,cmd);
+        drawRecursive(hwnd, msg, wParam, lParam, currentAlgorithm, currentShapeColor, currentFillColor, cmd);
     } else if (currentShape == SHAPE_FILLING || currentShape == Spline_Curve) {
         cmd.fillColor = currentFillColor;
         FillingAlgo(hwnd, msg, wParam, lParam, currentAlgorithm, cmd);
@@ -532,7 +538,7 @@ void DrawAlgoFromFile(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, DrawCom
             ChoosedrawFilling(hwnd, msg, wParam, lParam, cmd);
             break;
         case SHAPE_Recursive_AND_NOT:
-            DrawRec(cmd.algorithm/**/, hdc, cmd.points[0], cmd.shapeColor,cmd.fillColor);
+            DrawRec(cmd.algorithm/**/, hdc, cmd.points[0], cmd.shapeColor, cmd.fillColor);
             break;
         case Spline_Curve  :
             ChoosedrawFilling(hwnd, msg, wParam, lParam, cmd);
@@ -544,7 +550,7 @@ void DrawAlgoFromFile(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, DrawCom
     switch (cmd.algorithm) {
         // Clipping
         case ALGO_CLIP_RECTANGLE_LINE:
-         //     ClippingPoint(  cmd.shapeColor ,hdc ,cmd.points.back());
+            //     ClippingPoint(  cmd.shapeColor ,hdc ,cmd.points.back());
             break;
         case ALGO_CLIP_RECTANGLE_POINT:
             CohenSutherlandLineRectangle(hdc, cmd.points[0], cmd.points[1], cmd.shapeColor);

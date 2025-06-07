@@ -24,10 +24,6 @@ LRESULT drawPointRectangle(HWND hwnd, UINT m, WPARAM wp, LPARAM lp, COLORREF col
     PAINTSTRUCT ps;
 
     switch (m) {
-
-        case WM_PAINT:
-            break;
-
         case WM_LBUTTONDOWN: {
             hdc = GetDC(hwnd);
             int x = LOWORD(lp);

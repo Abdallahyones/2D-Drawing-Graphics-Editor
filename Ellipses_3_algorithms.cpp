@@ -168,14 +168,13 @@ void DrawellipseIterativePolar(HDC hdc, int xc, int yc, int A, int B, COLORREF c
 }
 
 
-Point p1, p22;
-
 LRESULT drawEllipses(HWND hwnd, UINT m, WPARAM wp, LPARAM lp, Algorithm algo, COLORREF color, DrawCommand &cmd) {
     HDC hdc;
+    static Point p1, p22;
     static int xc, yc, x, y, count = 0;
     switch (m) {
         case WM_ERASEBKGND: {
-            HDC hdc = (HDC) wp;
+            hdc = (HDC) wp;
             RECT rect;
             GetClientRect(hwnd, &rect);
             FillRect(hdc, &rect, hBackgroundBrush);

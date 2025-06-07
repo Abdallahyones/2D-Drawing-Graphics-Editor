@@ -78,9 +78,9 @@ void GetIntersection(int CodeOut, int &x, int &y, int x1, int y1, int x2, int y2
 }
 
 // Cohen-sutherland line clipping
-void CohenSutherlandLineSquare(HDC hdc, Point p1 , Point p2, COLORREF c) {
-    auto [x1,y1] =p1;
-    auto [x2,y2] =p2;
+void CohenSutherlandLineSquare(HDC hdc, Point p1, Point p2, COLORREF c) {
+    auto [x1, y1] = p1;
+    auto [x2, y2] = p2;
     int origX1 = x1, origY1 = y1, origX2 = x2, origY2 = y2;
     int code1 = ComputeCodeSquare(x1, y1);
     int code2 = ComputeCodeSquare(x2, y2);
@@ -110,17 +110,17 @@ void CohenSutherlandLineSquare(HDC hdc, Point p1 , Point p2, COLORREF c) {
     if (accept) {
         // Outside part 1: original to clipped start
         if (x1 != origX1 || y1 != origY1)
-            drawLineDDA(hdc, origX1, origY1, x1, y1, c); // red
+            drawLineDDA(hdc, origX1, origY1, x1, y1, RGB(255,0,0)); // red
 
         // Inside part
         drawLineDDA(hdc, x1, y1, x2, y2, c); // blue
 
         // Outside part 2: clipped end to original end
         if (x2 != origX2 || y2 != origY2)
-            drawLineDDA(hdc, x2, y2, origX2, origY2, c); // red
+            drawLineDDA(hdc, x2, y2, origX2, origY2, RGB(255,0,0)); // red
     } else {
         // Line completely outside, draw full line in red
-        drawLineDDA(hdc, origX1, origY1, origX2, origY2, c);
+        drawLineDDA(hdc, origX1, origY1, origX2, origY2, RGB(255,0,0));
     }
 }
 
@@ -139,7 +139,6 @@ LRESULT drawLineSquare(HWND hwnd, UINT m, WPARAM wp, LPARAM lp, COLORREF c, Draw
             int x = LOWORD(lp);
             int y = HIWORD(lp);
             Rectangle(hdc, xLeft, yTop, XRight, YBottom);
-            cmd.points.emplace_back(x, y);
             if (isFirstClick) {
                 x1 = x;
                 y1 = y;
@@ -147,6 +146,8 @@ LRESULT drawLineSquare(HWND hwnd, UINT m, WPARAM wp, LPARAM lp, COLORREF c, Draw
             } else {
                 x2 = x;
                 y2 = y;
+                cmd.points.emplace_back(x1, y1);
+                cmd.points.emplace_back(x2, y2);
                 CohenSutherlandLineSquare(hdc, cmd.points[0], cmd.points[1], c); // Clip and draw
                 drawHistory.emplace_back(cmd);
                 isFirstClick = true;
