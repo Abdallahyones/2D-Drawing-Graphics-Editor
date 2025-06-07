@@ -14,10 +14,7 @@
 #include "Graph.cpp"
 #include<iostream>
 #include <fstream>
-#include<vector>
-
 using namespace std;
-
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 void DrawAlgo(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -33,13 +30,15 @@ HBRUSH backgroundBrush = CreateSolidBrush(currentBackgroundColor);
 HCURSOR hCurrentCursor = LoadCursor(NULL, IDC_ARROW);
 
 
-void saveToFile(const string &filename) {
-    ofstream out(filename);
+void saveToFile() {
+    string fileName;
+    cout<<"Enter Name of  File : ";
+    cin>>fileName;
+    ofstream out(fileName);
     if (!out) {
         cerr << "Failed to open file for writing.\n";
         return;
     }
-    out << drawHistory.size() << '\n';
     for (const auto &cmd: drawHistory) {
         cout << static_cast<int>(cmd.shape) << " ";
         cout << static_cast<int>(cmd.algorithm) << " \n";
@@ -59,10 +58,13 @@ void saveToFile(const string &filename) {
     }
 }
 
-void loadFromFile(const string &filename, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    ifstream in(filename);
+void loadFromFile( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    string fileName;
+    cout<<"Enter Name of  File : ";
+    cin>>fileName;
+    ifstream in(fileName);
     if (!in) {
-        throw std::runtime_error("Failed to open file for reading.");
+        throw runtime_error("Failed to open file for reading.");
     }
     int commandCount;
     in >> commandCount;
@@ -100,6 +102,8 @@ void ClearScreen(HWND hwnd) {
     drawHistory.clear();
     vertices.clear();
     RECT rect;
+    isRectangleDrawn = false;
+    isSquareDrawn = false;
     GetClientRect(hwnd, &rect);
     FillRect(hdc, &rect, backgroundBrush);
     ReleaseDC(hwnd, hdc);
@@ -257,10 +261,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_COMMAND:
             switch (LOWORD(wParam)) {
                 case 1:
-                    saveToFile("in.txt");
+                    saveToFile();
                     break;
                 case 2:
-                    loadFromFile("in.txt", hwnd, msg, wParam, lParam);
+                    loadFromFile( hwnd, msg, wParam, lParam);
                     break;
                 case 3:
                     ClearScreen(hwnd);
@@ -296,11 +300,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     break;
 
                 case 10:
-                    saveToFile("in.txt");
+                    saveToFile();
                     drawingMode = false;
                     break;
                 case 11:
-                    loadFromFile("in.txt", hwnd, msg, wParam, lParam);
+                    loadFromFile(hwnd, msg, wParam, lParam);
                     break;
                 case 12:
                     currentAlgorithm = ALGO_CIRCLE_DIRECT;
@@ -545,23 +549,29 @@ void DrawAlgoFromFile(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, DrawCom
             break;
         case SHAPE_Convex:
             ChooseAndFillPolygon(hdc, cmd.points, cmd.shapeColor, cmd.fillColor, cmd.algorithm);
-
+            break;
     }
+
     switch (cmd.algorithm) {
         // Clipping
         case ALGO_CLIP_RECTANGLE_LINE:
-            //     ClippingPoint(  cmd.shapeColor ,hdc ,cmd.points.back());
+            drawRectangle(hwnd);
+            CohenSutherlandLineRectangle(hdc , cmd.points[0] , cmd.points[1],cmd.shapeColor);
             break;
         case ALGO_CLIP_RECTANGLE_POINT:
-            CohenSutherlandLineRectangle(hdc, cmd.points[0], cmd.points[1], cmd.shapeColor);
+            drawRectangle(hwnd);
+            DrawPointRectangle( hdc, cmd.points[0], cmd.shapeColor);
             break;
-//        case ALGO_CLIP_RECTANGLE_POLYGON:
-//            clipRectanglePolygon();
-//            break;
+       case ALGO_CLIP_RECTANGLE_POLYGON:
+           drawRectangle(hwnd);
+           makeClipped(hwnd , cmd.shapeColor , cmd.points);
+            break;
         case ALGO_CLIP_SQUARE_POINT:
+            drawRectangleSquare(hwnd);
             DrawPointSquare(hdc, cmd.points[0].x, cmd.points[0].y, cmd.shapeColor);
             break;
         case ALGO_CLIP_SQUARE_LINE:
+            drawRectangleSquare(hwnd);
             CohenSutherlandLineSquare(hdc, cmd.points[0], cmd.points[1], cmd.shapeColor);
             break;
 

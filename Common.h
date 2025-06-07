@@ -81,7 +81,8 @@ const int xLeft = 300, xRight = 500, yTop = 400, yBottom = 300;
 const int squareSize = 200;
 const int Xright = xLeft + squareSize;
 const int Ybottom = yTop + squareSize;
-
+extern bool isRectangleDrawn ;
+extern bool isSquareDrawn ;
 const int INSIDE = 0; //0000
 const int LEFT = 1; //0001
 const int RIGHT = 2; //0010
@@ -112,7 +113,8 @@ void drawRectangle(HWND hwnd);
 void drawRectangleSquare(HWND hwnd);
 // Function declarations
 int Round(double x);
-
+void changeRectangleWindow();
+void  changeSquareWindow();
 void DrawPoint(HDC hdc, int x, int y, COLORREF color);
 
 void Draw8Points(HDC hdc, int xc, int yc, int x, int y, COLORREF color);

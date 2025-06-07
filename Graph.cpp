@@ -426,6 +426,7 @@ LRESULT CALLBACK FillingAlgo(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 
     switch (message) {
         case WM_LBUTTONDOWN: {
+            cout<<"There is click Point in Position (x,y) " <<LOWORD(lParam) <<" "<< HIWORD(lParam)<<"\n";
             hdc = GetDC(hwnd);
             int x = LOWORD(lParam);
             int y = HIWORD(lParam);

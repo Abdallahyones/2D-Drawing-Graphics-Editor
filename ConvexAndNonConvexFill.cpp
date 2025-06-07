@@ -113,7 +113,7 @@ void ConvertPolyonToTable(Point vertices[], int vertexCount, ScanLineEntry table
 }
 
 void ConvexFill(HDC hdc, Point vertices[], int vertexCount, COLORREF fillColor) {
-    ScanLineEntry* table = new ScanLineEntry[MAX_SCANLINES];
+    ScanLineEntry *table = new ScanLineEntry[MAX_SCANLINES];
     InitializeScanlineTable(table);
     ConvertPolyonToTable(vertices, vertexCount, table);
     DrawScanLines(hdc, table, fillColor);
@@ -139,7 +139,7 @@ void BuildEdgeTable(Point *polygonVertices, int vertexCount, EdgeList table[]) {
             continue; // Skip horizontal edges
         }
         PolygonEdge rec = InitEdgeRec(previousVertex, currentVertex);
-        table[(int)previousVertex.y].push_back(rec);
+        table[(int) previousVertex.y].push_back(rec);
         previousVertex = polygonVertices[i];
     }
 }
@@ -207,9 +207,11 @@ void GeneralPolygonFill(HDC hdc, Point *polygonVertices, int vertexCount, COLORR
     }
     delete[] edgeTable;
 }
+
 // -------------------------------------------- Window Procedure --------------------------------------------------
 LRESULT CALLBACK
-drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, COLORREF color, COLORREF fillColor, DrawCommand &cmd) {
+drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, COLORREF color, COLORREF fillColor,
+           DrawCommand &cmd) {
 
     HDC hdc;
     int x, y;
@@ -217,6 +219,7 @@ drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, CO
 
     switch (msg) {
         case WM_LBUTTONDOWN:
+            cout << "There is click Point in Position (x,y) " << LOWORD(lParam) << " " << HIWORD(lParam) << "\n";
             hdc = GetDC(hwnd);
             x = LOWORD(lParam);
             y = HIWORD(lParam);
@@ -268,7 +271,7 @@ drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, CO
                         GeneralPolygonFill(hdc, vertices.data(), vertices.size(), fillColor);
                     }
                     drawHistory.push_back(cmd);
-                  //  vertices.clear();
+                    //  vertices.clear();
                 }
             }
             ReleaseDC(hwnd, hdc);
@@ -298,7 +301,7 @@ drawConvex(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm algo, CO
     return 0;
 }
 
-void ChooseAndFillPolygon(const HDC& hdc,  vector<Point>& vertices, COLORREF color,COLORREF fillColor,Algorithm algo) {
+void ChooseAndFillPolygon(const HDC &hdc, vector<Point> &vertices, COLORREF color, COLORREF fillColor, Algorithm algo) {
     DrawLineDDa(hdc, vertices[0].x, vertices[0].y, vertices.back().x, vertices.back().y, color);
     if (algo == ALGO_FILL_CONVEX) {
         ConvexFill(hdc, vertices.data(), vertices.size(), fillColor);

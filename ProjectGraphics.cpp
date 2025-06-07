@@ -5,7 +5,7 @@
 using namespace std;
 
 
-
+void makeClipped(HWND hwnd , COLORREF c ,vector<Point> &polygon );
 bool isPolygonClosed = false;
 
 vector<Point> userPolygon;
@@ -167,8 +167,6 @@ LRESULT drawRectanglePolygon(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , COLORREF 
 	{
 	case WM_PAINT:
 		hdc = BeginPaint(hwnd, &ps);
-		Rectangle(hdc, xLeft, yBottom, xRight, yTop); // Draw clipping rectangle
-
 		if (!userPolygon.empty())
 			drawPolygon(hdc, userPolygon, c); // original polygon in green
             cmd.points= userPolygon;
@@ -182,29 +180,23 @@ LRESULT drawRectanglePolygon(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , COLORREF 
 		break;
 
 	case WM_LBUTTONDOWN: {
+        cout<<"There is click Point in Position (x,y) " <<LOWORD(lp) <<" "<< HIWORD(lp)<<"\n";
 		if (isPolygonClosed) break;
 
 		int x = LOWORD(lp);
 		int y = HIWORD(lp);
-		userPolygon.push_back(Point(x, y));
+		userPolygon.emplace_back(x, y);
 
 		hdc = GetDC(hwnd);
-		SetPixel(hdc, x, y, c); // visual feedback for point
+		SetPixel(hdc, x, y, c);
 		ReleaseDC(hwnd, hdc);
 		break;
 	}
 
 	case WM_RBUTTONDOWN: {
-		if (userPolygon.size() < 3 || isPolygonClosed) break;
-
-		isPolygonClosed = true;
-
-		hdc = GetDC(hwnd);
-		drawPolygon(hdc, userPolygon, c); // draw original polygon
-
-		vector<Point> clipped = clipPolygon(userPolygon);
-		drawPolygon(hdc, clipped, c); // draw clipped polygon
-		ReleaseDC(hwnd, hdc);
+        cmd.points = userPolygon;
+        makeClipped( hwnd ,  c , userPolygon);
+        drawHistory.emplace_back(cmd);
 		break;
 	}
 
@@ -212,7 +204,7 @@ LRESULT drawRectanglePolygon(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , COLORREF 
 		if (wp == VK_ESCAPE) {
 			userPolygon.clear();
 			isPolygonClosed = false;
-			InvalidateRect(hwnd, NULL, TRUE); // force redraw
+			InvalidateRect(hwnd, NULL, TRUE);
 		}
 		break;
 	}
@@ -227,3 +219,15 @@ LRESULT drawRectanglePolygon(HWND hwnd, UINT m, WPARAM wp, LPARAM lp , COLORREF 
 	return 0;
 }
 
+void makeClipped(HWND hwnd , COLORREF c , vector<Point>&polygon)
+{
+    if (polygon.size() < 3 || isPolygonClosed) return;
+    isPolygonClosed = true;
+    HDC hdc = GetDC(hwnd);
+    drawPolygon(hdc, polygon, RGB(0,255,0)); // draw original polygon
+    vector<Point> clipped = clipPolygon(polygon);
+    drawPolygon(hdc, clipped, c); // draw clipped polygon
+    polygon.clear();
+    isPolygonClosed = false;
+    ReleaseDC(hwnd, hdc);
+}

@@ -113,12 +113,13 @@ drawCircle(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algorithm currentC
 
     switch (msg) {
         case WM_LBUTTONDOWN:
+            cout<<"There is click Point in Position (x,y) " <<LOWORD(lParam) <<" "<< HIWORD(lParam)<<"\n";
             if (circlePointCount < 2) {
                 circlePoints[circlePointCount].x = LOWORD(lParam);
                 circlePoints[circlePointCount].y = HIWORD(lParam);
                 circlePointCount++;
                 hdc = GetDC(hwnd);
-                DrawPoint(hdc, circlePoints[circlePointCount - 1].x, circlePoints[circlePointCount - 1].y, color);
+                SetPixel(hdc, circlePoints[circlePointCount - 1].x, circlePoints[circlePointCount - 1].y, color);
                 cmd.points.emplace_back(circlePoints[0]);
                 if (circlePointCount == 2) {
                     cmd.points.emplace_back(circlePoints[1]);

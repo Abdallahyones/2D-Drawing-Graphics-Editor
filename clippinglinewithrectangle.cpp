@@ -111,7 +111,7 @@ void CohenSutherlandLineRectangle(HDC hdc, Point p1 ,  Point p2, COLORREF color)
             DrawLineDDAWithClippingWithClipping(hdc, origX1, origY1, x1, y1, RGB(255,0,0)); // red
 
         // Inside part
-        DrawLineDDAWithClippingWithClipping(hdc, x1, y1, x2, y2, RGB(0,0,255)); // blue
+        DrawLineDDAWithClippingWithClipping(hdc, x1, y1, x2, y2, color); // blue
 
         // Outside part 2: clipped end to original end
         if (x2 != origX2 || y2 != origY2)
@@ -130,6 +130,7 @@ LRESULT drawLineRectangle(HWND hwnd, UINT m, WPARAM wp, LPARAM lp, COLORREF colo
 
     switch (m) {
         case WM_LBUTTONDOWN: {
+            cout<<"There is click Point in Position (x,y) " <<LOWORD(lp) <<" "<< HIWORD(lp)<<"\n";
             hdc = GetDC(hwnd);
             int x = LOWORD(lp);
             int y = HIWORD(lp);

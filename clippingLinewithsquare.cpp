@@ -135,6 +135,7 @@ LRESULT drawLineSquare(HWND hwnd, UINT m, WPARAM wp, LPARAM lp, COLORREF c, Draw
             break;
 
         case WM_LBUTTONDOWN: {
+            cout<<"There is click Point in Position (x,y) " <<LOWORD(lp) <<" "<< HIWORD(lp)<<"\n";
             hdc = GetDC(hwnd);
             int x = LOWORD(lp);
             int y = HIWORD(lp);

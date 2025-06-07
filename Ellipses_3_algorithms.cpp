@@ -210,6 +210,7 @@ LRESULT drawEllipses(HWND hwnd, UINT m, WPARAM wp, LPARAM lp, Algorithm algo, CO
             break;
         case WM_LBUTTONDOWN:
             hdc = GetDC(hwnd);
+            cout<<"There is click Point in Position (x,y) " <<LOWORD(lp) <<" "<< HIWORD(lp)<<"\n";
             count++;
             if (count == 1) {
                 xc = LOWORD(lp);

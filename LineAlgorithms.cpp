@@ -124,6 +124,7 @@ LRESULT WINAPI drawLine(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Algor
 
     switch (msg) {
         case WM_LBUTTONDOWN:
+            cout<<"There is click Point in Position (x,y) " <<LOWORD(lParam) <<" "<< HIWORD(lParam)<<"\n";
             if (pointCount < 2) {
                 points[pointCount].x = LOWORD(lParam);
                 points[pointCount].y = HIWORD(lParam);

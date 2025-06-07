@@ -24,6 +24,7 @@ LRESULT drawPointRectangle(HWND hwnd, UINT m, WPARAM wp, LPARAM lp, COLORREF col
     PAINTSTRUCT ps;
 
     switch (m) {
+        cout<<"There is click Point in Position (x,y) " <<LOWORD(lp) <<" "<< HIWORD(lp)<<"\n";
         case WM_LBUTTONDOWN: {
             hdc = GetDC(hwnd);
             int x = LOWORD(lp);

@@ -63,6 +63,7 @@ void FloodFillNonRecursive(HDC hdc, int x, int y, COLORREF boundaryColor, COLORR
 LRESULT WINAPI drawRecursive(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ,Algorithm algo, COLORREF boundaryColor , COLORREF fillcolor,DrawCommand& cmd) {
     switch (msg) {
         case WM_LBUTTONDOWN: {
+            cout<<"There is click Point in Position (x,y) " <<LOWORD(lp) <<" "<< HIWORD(lp)<<"\n";
             HDC hdc = GetDC(hwnd);
             int x = LOWORD(lp);
             int y = HIWORD(lp);
