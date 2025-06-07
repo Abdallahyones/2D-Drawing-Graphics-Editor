@@ -115,6 +115,7 @@ COLORREF OpenColorDialog(HWND hwnd, COLORREF initialColor) {
     cc.hwndOwner = hwnd;
     cc.lpCustColors = acrCustClr;
     cc.rgbResult = initialColor;
+    
     cc.Flags = CC_FULLOPEN | CC_RGBINIT;
 
     if (ChooseColor(&cc)) {
