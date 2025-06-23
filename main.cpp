@@ -39,6 +39,7 @@ void saveToFile() {
         cerr << "Failed to open file for writing.\n";
         return;
     }
+    out<<drawHistory.size()<<"\n";
     for (const auto &cmd: drawHistory) {
         cout << static_cast<int>(cmd.shape) << " ";
         cout << static_cast<int>(cmd.algorithm) << " \n";
